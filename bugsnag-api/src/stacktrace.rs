@@ -1,12 +1,23 @@
 use std::convert::From;
 use std::path::Path;
-use backtrace::{Symbol, BacktraceSymbol, Backtrace};
+use backtrace::{BacktraceSymbol, Backtrace};
 
-#[derive(Debug, RustcEncodable)]
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Frame {
     file: String,
-    lineNumber: u32,
+    line_number: u32,
     method: String,
+}
+
+impl Frame {
+    pub fn new(file: &str, linenumber: u32, method: &str) -> Frame {
+        Frame {
+            file: file.to_owned(),
+            line_number: linenumber,
+            method: method.to_owned(),
+        }
+    }
 }
 
 impl<'a> From<&'a BacktraceSymbol> for Frame {
@@ -23,7 +34,7 @@ impl<'a> From<&'a BacktraceSymbol> for Frame {
 
         Frame {
             file: file.to_string(),
-            lineNumber: linenumber,
+            line_number: linenumber,
             method: method.to_string(),
         }
     }
@@ -47,7 +58,7 @@ pub fn create_stacktrace() -> Vec<Frame> {
 #[cfg(test)]
 mod tests {
     use super::{create_stacktrace, Frame};
-    use rustc_serialize::json::{self, Json};
+    use serde_test::{Token, assert_ser_tokens};
 
     #[test]
     fn test_create_stacktrace() {
@@ -71,16 +82,21 @@ mod tests {
     fn test_frame_to_json() {
         let frame = Frame {
             file: "test.rs".to_string(),
-            lineNumber: 500,
+            line_number: 500,
             method: "test_json".to_string(),
         };
-        let frame_json = Json::from_str(json::encode(&frame).unwrap().as_str()).unwrap();
 
-        assert_eq!(frame_json.find("file").unwrap().as_string().unwrap(),
-                   "test.rs");
-        assert_eq!(frame_json.find("lineNumber").unwrap().as_u64().unwrap(),
-                   500);
-        assert_eq!(frame_json.find("method").unwrap().as_string().unwrap(),
-                   "test_json");
+        assert_ser_tokens(&frame,
+                          &[Token::StructStart("Frame", 3),
+                            Token::StructSep,
+                            Token::Str("file"),
+                            Token::Str("test.rs"),
+                            Token::StructSep,
+                            Token::Str("lineNumber"),
+                            Token::U32(500),
+                            Token::StructSep,
+                            Token::Str("method"),
+                            Token::Str("test_json"),
+                            Token::StructEnd]);
     }
 }

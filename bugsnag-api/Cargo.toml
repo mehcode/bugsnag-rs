@@ -5,5 +5,8 @@ authors = ["Bastian Köcher <git@kchr.de>"]
 
 [dependencies]
 hyper = "0.5"
-rustc-serialize = "0.3.22"
 backtrace = "0.3"
+serde = "0.9"
+serde_derive = "0.9"
+serde_json = "0.9"
+serde_test = "0.9"
