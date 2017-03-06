@@ -11,3 +11,5 @@ mod notification;
 pub mod stacktrace;
 mod exception;
 pub mod bugsnag;
+pub mod handler;
+
