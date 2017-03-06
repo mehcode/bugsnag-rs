@@ -4,4 +4,4 @@ version = "0.1.0"
 authors = ["Bastian Köcher <git@kchr.de>"]
 
 [dependencies]
-bugsnag-api = { path = "../bugsnag-api" }
+bugsnag-api = { path = "../../" }
