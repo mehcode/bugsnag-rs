@@ -9,11 +9,15 @@ const NOTIFY_URL: &'static str = "http://notify.bugsnag.com";
 
 pub struct Bugsnag {
     api_key: String,
+    project_source_dir: Option<String>,
 }
 
 impl Bugsnag {
-    pub fn new(api_key: &str) -> Bugsnag {
-        Bugsnag { api_key: api_key.to_owned() }
+    pub fn new(api_key: &str, proj_source_dir: Option<String>) -> Bugsnag {
+        Bugsnag {
+            api_key: api_key.to_owned(),
+            project_source_dir: proj_source_dir,
+        }
     }
 
     pub fn notify(&self, error_class: &str, message: &str, stacktrace: Vec<stacktrace::Frame>) {
@@ -32,5 +36,9 @@ impl Bugsnag {
             .header(ContentType::json())
             .body(json)
             .send();
+    }
+
+    pub fn get_project_source_dir(&self) -> &Option<String> {
+        &self.project_source_dir
     }
 }

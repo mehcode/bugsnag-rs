@@ -10,7 +10,7 @@ pub fn register_panic_handler(api: Bugsnag) {
             None => "unknown error!",
         };
 
-        let stacktrace = stacktrace::create_stacktrace();
+        let stacktrace = stacktrace::create_stacktrace(api.get_project_source_dir());
 
         api.notify("Panic", message, stacktrace);
     }));

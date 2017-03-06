@@ -39,7 +39,6 @@ mod tests {
     use super::{Notification, NOTIFIER_NAME, NOTIFIER_VERSION, NOTIFIER_URL};
     use super::super::{event, exception, stacktrace};
     use serde_test::{Token, assert_ser_tokens};
-    use serde_json;
 
     #[test]
     fn test_notification_to_json() {
@@ -72,18 +71,16 @@ mod tests {
 
     #[test]
     fn test_notification_with_event_to_json() {
-        let frame = stacktrace::Frame::new("test.rs", 400, "test");
+        let frame = stacktrace::Frame::new("test.rs", 400, "test", false);
         let exception = exception::Exception::new("Assert", "Assert", vec![frame]);
         let event = event::Event::new(vec![exception]);
 
         let notification = Notification::new("safe-api-key", vec![event]);
 
-        println!("{}", serde_json::to_string(&notification).unwrap());
-
         assert_ser_tokens(&notification,
                           &[Token::StructStart("Notification", 3),
                             Token::StructSep,
-                            Token::Str("piKey"),
+                            Token::Str("apiKey"),
                             Token::Str("safe-api-key"),
                             Token::StructSep,
                             Token::Str("notifier"),
@@ -121,7 +118,7 @@ mod tests {
                             Token::Str("stacktrace"),
                             Token::SeqStart(Some(1)),
                             Token::SeqSep,
-                            Token::StructStart("Frame", 3),
+                            Token::StructStart("Frame", 4),
                             Token::StructSep,
                             Token::Str("file"),
                             Token::Str("test.rs"),
@@ -131,6 +128,9 @@ mod tests {
                             Token::StructSep,
                             Token::Str("method"),
                             Token::Str("test"),
+                            Token::StructSep,
+                            Token::Str("inProject"),
+                            Token::Bool(false),
                             Token::StructEnd,
                             Token::SeqEnd,
                             Token::StructEnd,
