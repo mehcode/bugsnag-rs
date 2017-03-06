@@ -4,8 +4,10 @@ extern crate serde;
 extern crate serde_json;
 extern crate serde_test;
 extern crate backtrace;
+extern crate hyper;
 
 mod event;
 mod notification;
-mod stacktrace;
+pub mod stacktrace;
 mod exception;
+pub mod bugsnag;
