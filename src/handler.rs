@@ -1,4 +1,4 @@
-use super::bugsnag::Bugsnag;
+use super::bugsnag::{Bugsnag, Severity};
 use super::stacktrace;
 
 use std::panic;
@@ -12,7 +12,7 @@ pub fn register_panic_handler(api: Bugsnag) {
 
         let stacktrace = stacktrace::create_stacktrace(api.get_project_source_dir());
 
-        api.notify("Panic", message, &stacktrace);
+        api.notify("Panic", message, Severity::Error, &stacktrace, None);
     }));
 }
 

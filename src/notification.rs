@@ -37,7 +37,7 @@ impl<'a> Notification<'a> {
 #[cfg(test)]
 mod tests {
     use super::{Notification, NOTIFIER_NAME, NOTIFIER_VERSION, NOTIFIER_URL};
-    use super::super::{event, exception, stacktrace};
+    use super::super::{event, exception, stacktrace, bugsnag};
     use serde_test::{Token, assert_ser_tokens};
 
     #[test]
@@ -74,7 +74,7 @@ mod tests {
     fn test_notification_with_event_to_json() {
         let frames = vec![stacktrace::Frame::new("test.rs", 400, "test", false)];
         let exceptions = vec![exception::Exception::new("Assert", "Assert", &frames)];
-        let events = vec![event::Event::new(&exceptions)];
+        let events = vec![event::Event::new(&exceptions, bugsnag::Severity::Error, None)];
 
         let notification = Notification::new("safe-api-key", &events);
 
@@ -100,7 +100,7 @@ mod tests {
                             Token::Str("events"),
                             Token::SeqStart(Some(1)),
                             Token::SeqSep,
-                            Token::StructStart("Event", 2),
+                            Token::StructStart("Event", 3),
                             Token::StructSep,
                             Token::Str("payloadVersion"),
                             Token::U32(event::PAYLOAD_VERSION),
@@ -136,6 +136,9 @@ mod tests {
                             Token::SeqEnd,
                             Token::StructEnd,
                             Token::SeqEnd,
+                            Token::StructSep,
+                            Token::Str("severity"),
+                            Token::EnumUnit("Severity", "error"),
                             Token::StructEnd,
                             Token::SeqEnd,
                             Token::StructEnd]);

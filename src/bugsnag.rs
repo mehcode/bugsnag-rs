@@ -12,6 +12,14 @@ pub enum Error {
     JsonTransferFailed,
 }
 
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Severity {
+    Error,
+    Warning,
+    Info,
+}
+
 pub struct Bugsnag {
     api_key: String,
     project_source_dir: Option<String>,
@@ -28,10 +36,12 @@ impl Bugsnag {
     pub fn notify(&self,
                   error_class: &str,
                   message: &str,
-                  stacktrace: &[stacktrace::Frame])
+                  severity: Severity,
+                  stacktrace: &[stacktrace::Frame],
+                  context: Option<&str>)
                   -> Result<(), Error> {
         let exceptions = vec![exception::Exception::new(error_class, message, stacktrace)];
-        let events = vec![event::Event::new(&exceptions)];
+        let events = vec![event::Event::new(&exceptions, severity, context)];
         let notification = notification::Notification::new(self.api_key.as_str(), &events);
 
         match serde_json::to_string(&notification) {
@@ -53,5 +63,32 @@ impl Bugsnag {
 
     pub fn get_project_source_dir(&self) -> &Option<String> {
         &self.project_source_dir
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Severity;
+    use serde_test::{Token, assert_ser_tokens};
+
+    #[test]
+    fn test_error_to_json() {
+        let severity = Severity::Error;
+
+        assert_ser_tokens(&severity, &[Token::EnumUnit("Severity", "error")]);
+    }
+
+    #[test]
+    fn test_info_to_json() {
+        let severity = Severity::Info;
+
+        assert_ser_tokens(&severity, &[Token::EnumUnit("Severity", "info")]);
+    }
+
+    #[test]
+    fn test_warning_to_json() {
+        let severity = Severity::Warning;
+
+        assert_ser_tokens(&severity, &[Token::EnumUnit("Severity", "warning")]);
     }
 }
