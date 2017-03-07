@@ -5,6 +5,7 @@ extern crate serde_json;
 extern crate serde_test;
 extern crate backtrace;
 extern crate hyper;
+extern crate sys_info;
 
 mod event;
 mod notification;
@@ -12,4 +13,4 @@ pub mod stacktrace;
 mod exception;
 pub mod bugsnag;
 pub mod handler;
-
+mod deviceinfo;

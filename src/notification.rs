@@ -37,7 +37,7 @@ impl<'a> Notification<'a> {
 #[cfg(test)]
 mod tests {
     use super::{Notification, NOTIFIER_NAME, NOTIFIER_VERSION, NOTIFIER_URL};
-    use super::super::{event, exception, stacktrace, bugsnag};
+    use super::super::{event, exception, stacktrace, bugsnag, deviceinfo};
     use serde_test::{Token, assert_ser_tokens};
 
     #[test]
@@ -74,7 +74,8 @@ mod tests {
     fn test_notification_with_event_to_json() {
         let frames = vec![stacktrace::Frame::new("test.rs", 400, "test", false)];
         let exceptions = vec![exception::Exception::new("Assert", "Assert", &frames)];
-        let events = vec![event::Event::new(&exceptions, bugsnag::Severity::Error, None)];
+        let device = deviceinfo::DeviceInfo::new("1.0.0", "testmachine");
+        let events = vec![event::Event::new(&exceptions, bugsnag::Severity::Error, None, &device)];
 
         let notification = Notification::new("safe-api-key", &events);
 
@@ -100,7 +101,7 @@ mod tests {
                             Token::Str("events"),
                             Token::SeqStart(Some(1)),
                             Token::SeqSep,
-                            Token::StructStart("Event", 3),
+                            Token::StructStart("Event", 4),
                             Token::StructSep,
                             Token::Str("payloadVersion"),
                             Token::U32(event::PAYLOAD_VERSION),
@@ -139,6 +140,16 @@ mod tests {
                             Token::StructSep,
                             Token::Str("severity"),
                             Token::EnumUnit("Severity", "error"),
+                            Token::StructSep,
+                            Token::Str("device"),
+                            Token::StructStart("DeviceInfo", 2),
+                            Token::StructSep,
+                            Token::Str("osVersion"),
+                            Token::Str("1.0.0"),
+                            Token::StructSep,
+                            Token::Str("hostname"),
+                            Token::Str("testmachine"),
+                            Token::StructEnd,
                             Token::StructEnd,
                             Token::SeqEnd,
                             Token::StructEnd]);

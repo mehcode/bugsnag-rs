@@ -1,4 +1,4 @@
-use super::{event, exception, notification, stacktrace};
+use super::{event, exception, notification, stacktrace, deviceinfo};
 
 use serde_json;
 
@@ -23,6 +23,7 @@ pub enum Severity {
 pub struct Bugsnag {
     api_key: String,
     project_source_dir: Option<String>,
+    device_info: deviceinfo::DeviceInfo,
 }
 
 impl Bugsnag {
@@ -30,6 +31,7 @@ impl Bugsnag {
         Bugsnag {
             api_key: api_key.to_owned(),
             project_source_dir: proj_source_dir,
+            device_info: deviceinfo::DeviceInfo::generate(),
         }
     }
 
@@ -41,7 +43,7 @@ impl Bugsnag {
                   context: Option<&str>)
                   -> Result<(), Error> {
         let exceptions = vec![exception::Exception::new(error_class, message, stacktrace)];
-        let events = vec![event::Event::new(&exceptions, severity, context)];
+        let events = vec![event::Event::new(&exceptions, severity, context, &self.device_info)];
         let notification = notification::Notification::new(self.api_key.as_str(), &events);
 
         match serde_json::to_string(&notification) {
@@ -63,6 +65,16 @@ impl Bugsnag {
 
     pub fn get_project_source_dir(&self) -> &Option<String> {
         &self.project_source_dir
+    }
+
+    pub fn set_device_info(&mut self, hostname: Option<&str>, version: Option<&str>) {
+        if let Some(name) = hostname {
+            self.device_info.set_hostname(name);
+        }
+
+        if let Some(ver) = version {
+            self.device_info.set_os_version(ver);
+        }
     }
 }
 
