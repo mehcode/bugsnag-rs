@@ -1,5 +1,5 @@
 use std::path::Path;
-use backtrace::{BacktraceSymbol, Backtrace};
+use backtrace::{self, Symbol};
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
@@ -20,7 +20,7 @@ impl Frame {
         }
     }
 
-    pub fn from_symbol(trace: &BacktraceSymbol, proj_source_dir: &Option<String>) -> Frame {
+    pub fn from_symbol(trace: &Symbol, proj_source_dir: &Option<String>) -> Frame {
         let file = trace.filename()
             .unwrap_or(Path::new(""))
             .to_str()
@@ -41,16 +41,13 @@ impl Frame {
 }
 
 pub fn create_stacktrace(proj_source_dir: &Option<String>) -> Vec<Frame> {
-    let trace = Backtrace::new();
     let mut result: Vec<Frame> = Vec::new();
 
-    for frame in trace.frames() {
-        // as one frame can have multiple symbols, we treat each symbol as
-        // one frame.
-        for symbol in frame.symbols() {
-            result.push(Frame::from_symbol(symbol, &proj_source_dir));
-        }
-    }
+    backtrace::trace(|frame| {
+        backtrace::resolve(frame.ip(),
+                           |symbol| { result.push(Frame::from_symbol(symbol, &proj_source_dir)); });
+        true
+    });
 
     result
 }
@@ -62,15 +59,17 @@ mod tests {
 
     #[test]
     fn test_create_stacktrace() {
-        let frames = create_stacktrace(&None);
+        let frames = create_stacktrace(&Some(env!("CARGO_MANIFEST_DIR").to_string()));
         let mut found_frame = false;
         let file = file!();
 
         for frame in frames {
             if frame.method == "bugsnag_api::stacktrace::tests::test_create_stacktrace" {
                 if frame.file.ends_with(file) {
-                    found_frame = true;
-                    break;
+                    if frame.in_project {
+                        found_frame = true;
+                        break;
+                    }
                 }
             }
         }
