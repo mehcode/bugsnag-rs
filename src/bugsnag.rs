@@ -1,4 +1,4 @@
-use super::{event, exception, notification, stacktrace, deviceinfo};
+use super::{event, exception, notification, stacktrace, deviceinfo, appinfo};
 
 use serde_json;
 
@@ -24,6 +24,7 @@ pub struct Bugsnag {
     api_key: String,
     project_source_dir: Option<String>,
     device_info: deviceinfo::DeviceInfo,
+    app_info: Option<appinfo::AppInfo>,
 }
 
 impl Bugsnag {
@@ -32,6 +33,7 @@ impl Bugsnag {
             api_key: api_key.to_owned(),
             project_source_dir: proj_source_dir,
             device_info: deviceinfo::DeviceInfo::generate(),
+            app_info: None,
         }
     }
 
@@ -43,7 +45,11 @@ impl Bugsnag {
                   context: Option<&str>)
                   -> Result<(), Error> {
         let exceptions = vec![exception::Exception::new(error_class, message, stacktrace)];
-        let events = vec![event::Event::new(&exceptions, severity, context, &self.device_info)];
+        let events = vec![event::Event::new(&exceptions,
+                                            severity,
+                                            context,
+                                            &self.device_info,
+                                            &self.app_info)];
         let notification = notification::Notification::new(self.api_key.as_str(), &events);
 
         match serde_json::to_string(&notification) {
@@ -75,6 +81,17 @@ impl Bugsnag {
         if let Some(ver) = version {
             self.device_info.set_os_version(ver);
         }
+    }
+
+    pub fn set_app_info(&mut self,
+                        version: Option<&str>,
+                        release_stage: Option<&str>,
+                        atype: Option<&str>) {
+        self.app_info = Some(appinfo::AppInfo::new(version, release_stage, atype));
+    }
+
+    pub fn reset_app_info(&mut self) {
+        self.app_info = None;
     }
 }
 

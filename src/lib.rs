@@ -14,3 +14,4 @@ mod exception;
 pub mod bugsnag;
 pub mod handler;
 mod deviceinfo;
+mod appinfo;

@@ -75,7 +75,9 @@ mod tests {
         let frames = vec![stacktrace::Frame::new("test.rs", 400, "test", false)];
         let exceptions = vec![exception::Exception::new("Assert", "Assert", &frames)];
         let device = deviceinfo::DeviceInfo::new("1.0.0", "testmachine");
-        let events = vec![event::Event::new(&exceptions, bugsnag::Severity::Error, None, &device)];
+        let app = None;
+        let events =
+            vec![event::Event::new(&exceptions, bugsnag::Severity::Error, None, &device, &app)];
 
         let notification = Notification::new("safe-api-key", &events);
 
