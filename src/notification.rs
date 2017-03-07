@@ -7,27 +7,27 @@ const NOTIFIER_URL: &'static str = "url";
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct Notifier {
-    name: String,
-    version: String,
-    url: String,
+    name: &'static str,
+    version: &'static str,
+    url: &'static str,
 }
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Notification {
-    api_key: String,
+pub struct Notification<'a> {
+    api_key: &'a str,
     notifier: Notifier,
-    events: Vec<Event>,
+    events: &'a Vec<Event<'a>>,
 }
 
-impl Notification {
-    pub fn new(apikey: &str, events: Vec<Event>) -> Notification {
+impl<'a> Notification<'a> {
+    pub fn new(apikey: &'a str, events: &'a Vec<Event>) -> Notification<'a> {
         Notification {
-            api_key: apikey.to_owned(),
+            api_key: apikey,
             notifier: Notifier {
-                name: NOTIFIER_NAME.to_owned(),
-                version: NOTIFIER_VERSION.to_owned(),
-                url: NOTIFIER_URL.to_owned(),
+                name: NOTIFIER_NAME,
+                version: NOTIFIER_VERSION,
+                url: NOTIFIER_URL,
             },
             events: events,
         }
@@ -42,7 +42,8 @@ mod tests {
 
     #[test]
     fn test_notification_to_json() {
-        let notification = Notification::new("safe-api-key", Vec::new());
+        let empty_vec = Vec::new();
+        let notification = Notification::new("safe-api-key", &empty_vec);
 
         assert_ser_tokens(&notification,
                           &[Token::StructStart("Notification", 3),
@@ -71,11 +72,11 @@ mod tests {
 
     #[test]
     fn test_notification_with_event_to_json() {
-        let frame = stacktrace::Frame::new("test.rs", 400, "test", false);
-        let exception = exception::Exception::new("Assert", "Assert", vec![frame]);
-        let event = event::Event::new(vec![exception]);
+        let frames = vec![stacktrace::Frame::new("test.rs", 400, "test", false)];
+        let exceptions = vec![exception::Exception::new("Assert", "Assert", &frames)];
+        let events = vec![event::Event::new(&exceptions)];
 
-        let notification = Notification::new("safe-api-key", vec![event]);
+        let notification = Notification::new("safe-api-key", &events);
 
         assert_ser_tokens(&notification,
                           &[Token::StructStart("Notification", 3),

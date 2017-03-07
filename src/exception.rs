@@ -2,17 +2,17 @@ use super::stacktrace::Frame;
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Exception {
-    error_class: String,
-    message: String,
-    stacktrace: Vec<Frame>,
+pub struct Exception<'a> {
+    error_class: &'a str,
+    message: &'a str,
+    stacktrace: &'a Vec<Frame>,
 }
 
-impl Exception {
-    pub fn new(errorclass: &str, message: &str, stacktrace: Vec<Frame>) -> Exception {
+impl<'a> Exception<'a> {
+    pub fn new(errorclass: &'a str, message: &'a str, stacktrace: &'a Vec<Frame>) -> Exception<'a> {
         Exception {
-            error_class: errorclass.to_owned(),
-            message: message.to_owned(),
+            error_class: errorclass,
+            message: message,
             stacktrace: stacktrace,
         }
     }
@@ -25,7 +25,8 @@ mod tests {
 
     #[test]
     fn test_exception_to_json() {
-        let ex = Exception::new("Assert", "Assert", Vec::new());
+        let empty_vec = Vec::new();
+        let ex = Exception::new("Assert", "Assert", &empty_vec);
 
         assert_ser_tokens(&ex,
                           &[Token::StructStart("Exception", 3),

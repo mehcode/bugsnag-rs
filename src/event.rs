@@ -4,13 +4,13 @@ pub const PAYLOAD_VERSION: u32 = 2;
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
-pub struct Event {
+pub struct Event<'a> {
     payload_version: u32,
-    exceptions: Vec<Exception>,
+    exceptions: &'a Vec<Exception<'a>>,
 }
 
-impl Event {
-    pub fn new(exceptions: Vec<Exception>) -> Event {
+impl<'a> Event<'a> {
+    pub fn new(exceptions: &'a Vec<Exception>) -> Event<'a> {
         Event {
             payload_version: PAYLOAD_VERSION,
             exceptions: exceptions,
@@ -25,7 +25,8 @@ mod tests {
 
     #[test]
     fn test_event_to_json() {
-        let ex = Event::new(Vec::new());
+        let empty_vec = Vec::new();
+        let ex = Event::new(&empty_vec);
 
         assert_ser_tokens(&ex,
                           &[Token::StructStart("Event", 2),

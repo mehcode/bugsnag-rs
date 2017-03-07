@@ -20,10 +20,10 @@ impl Bugsnag {
         }
     }
 
-    pub fn notify(&self, error_class: &str, message: &str, stacktrace: Vec<stacktrace::Frame>) {
-        let exception = exception::Exception::new(error_class, message, stacktrace);
-        let event = event::Event::new(vec![exception]);
-        let notification = notification::Notification::new(self.api_key.as_str(), vec![event]);
+    pub fn notify(&self, error_class: &str, message: &str, stacktrace: &Vec<stacktrace::Frame>) {
+        let exceptions = vec![exception::Exception::new(error_class, message, stacktrace)];
+        let events = vec![event::Event::new(&exceptions)];
+        let notification = notification::Notification::new(self.api_key.as_str(), &events);
 
         if let Ok(json) = serde_json::to_string(&notification) {
             self.send(json.as_str());
