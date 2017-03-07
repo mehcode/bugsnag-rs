@@ -20,7 +20,7 @@ impl Bugsnag {
         }
     }
 
-    pub fn notify(&self, error_class: &str, message: &str, stacktrace: &Vec<stacktrace::Frame>) {
+    pub fn notify(&self, error_class: &str, message: &str, stacktrace: &[stacktrace::Frame]) {
         let exceptions = vec![exception::Exception::new(error_class, message, stacktrace)];
         let events = vec![event::Event::new(&exceptions)];
         let notification = notification::Notification::new(self.api_key.as_str(), &events);

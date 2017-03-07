@@ -22,7 +22,7 @@ impl Frame {
 
     pub fn from_symbol(trace: &Symbol, proj_source_dir: &Option<String>) -> Frame {
         let file = trace.filename()
-            .unwrap_or(Path::new(""))
+            .unwrap_or_else(|| Path::new(""))
             .to_str()
             .unwrap_or("");
         let linenumber = trace.lineno().unwrap_or(0);
@@ -45,7 +45,7 @@ pub fn create_stacktrace(proj_source_dir: &Option<String>) -> Vec<Frame> {
 
     backtrace::trace(|frame| {
         backtrace::resolve(frame.ip(),
-                           |symbol| { result.push(Frame::from_symbol(symbol, &proj_source_dir)); });
+                           |symbol| { result.push(Frame::from_symbol(symbol, proj_source_dir)); });
         true
     });
 

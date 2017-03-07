@@ -5,11 +5,11 @@ use super::stacktrace::Frame;
 pub struct Exception<'a> {
     error_class: &'a str,
     message: &'a str,
-    stacktrace: &'a Vec<Frame>,
+    stacktrace: &'a [Frame],
 }
 
 impl<'a> Exception<'a> {
-    pub fn new(errorclass: &'a str, message: &'a str, stacktrace: &'a Vec<Frame>) -> Exception<'a> {
+    pub fn new(errorclass: &'a str, message: &'a str, stacktrace: &'a [Frame]) -> Exception<'a> {
         Exception {
             error_class: errorclass,
             message: message,

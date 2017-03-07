@@ -17,11 +17,11 @@ struct Notifier {
 pub struct Notification<'a> {
     api_key: &'a str,
     notifier: Notifier,
-    events: &'a Vec<Event<'a>>,
+    events: &'a [Event<'a>],
 }
 
 impl<'a> Notification<'a> {
-    pub fn new(apikey: &'a str, events: &'a Vec<Event>) -> Notification<'a> {
+    pub fn new(apikey: &'a str, events: &'a [Event]) -> Notification<'a> {
         Notification {
             api_key: apikey,
             notifier: Notifier {

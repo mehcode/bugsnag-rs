@@ -6,11 +6,11 @@ pub const PAYLOAD_VERSION: u32 = 2;
 #[serde(rename_all = "camelCase")]
 pub struct Event<'a> {
     payload_version: u32,
-    exceptions: &'a Vec<Exception<'a>>,
+    exceptions: &'a [Exception<'a>],
 }
 
 impl<'a> Event<'a> {
-    pub fn new(exceptions: &'a Vec<Exception>) -> Event<'a> {
+    pub fn new(exceptions: &'a [Exception]) -> Event<'a> {
         Event {
             payload_version: PAYLOAD_VERSION,
             exceptions: exceptions,
