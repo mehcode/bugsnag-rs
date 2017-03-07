@@ -2,7 +2,7 @@ use super::event::Event;
 
 const NOTIFIER_NAME: &'static str = "Bugsnag Rust";
 const NOTIFIER_VERSION: &'static str = env!("CARGO_PKG_VERSION");
-const NOTIFIER_URL: &'static str = "url";
+const NOTIFIER_URL: &'static str = "https://github.com/superscale/bugsnag-api-rs";
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
