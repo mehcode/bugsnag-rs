@@ -27,8 +27,8 @@ impl Frame {
             .unwrap_or("");
         let linenumber = trace.lineno().unwrap_or(0);
         let method = match trace.name() {
-            Some(name) => name.as_str().unwrap_or("unknown"),
-            None => "unknown",
+            Some(name) => name.to_string(),
+            None => "unknown".to_string(),
         };
 
         let in_project = match *proj_source_dir {
@@ -36,7 +36,7 @@ impl Frame {
             None => false,
         };
 
-        Frame::new(file, linenumber, method, in_project)
+        Frame::new(file, linenumber, method.as_str(), in_project)
     }
 }
 
@@ -45,7 +45,7 @@ pub fn create_stacktrace(proj_source_dir: &Option<String>) -> Vec<Frame> {
 
     backtrace::trace(|frame| {
         backtrace::resolve(frame.ip(),
-                           |symbol| { result.push(Frame::from_symbol(symbol, proj_source_dir)); });
+                           |symbol| result.push(Frame::from_symbol(&symbol, proj_source_dir)));
         true
     });
 
