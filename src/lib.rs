@@ -11,6 +11,7 @@ mod event;
 mod notification;
 pub mod stacktrace;
 mod exception;
-pub mod bugsnag;
+mod bugsnag_impl;
+pub use self::bugsnag_impl::*;
 mod deviceinfo;
 mod appinfo;

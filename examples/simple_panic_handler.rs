@@ -2,9 +2,10 @@
 //!
 //! This simple implementations consumes the api object. So, we can not change
 //! any parameters after registering the panic handler.
-extern crate bugsnag_api;
 
-use bugsnag_api::{bugsnag, stacktrace};
+extern crate bugsnag;
+
+use bugsnag::stacktrace;
 
 use std::panic;
 

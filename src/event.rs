@@ -1,5 +1,5 @@
 use super::exception::Exception;
-use super::bugsnag::Severity;
+use super::Severity;
 use super::deviceinfo::DeviceInfo;
 use super::appinfo::AppInfo;
 

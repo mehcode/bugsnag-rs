@@ -64,7 +64,7 @@ mod tests {
         let file = file!();
 
         for frame in frames {
-            if frame.method == "bugsnag_api::stacktrace::tests::test_create_stacktrace" {
+            if frame.method == "bugsnag::stacktrace::tests::test_create_stacktrace" {
                 if frame.file.ends_with(file) {
                     if frame.in_project {
                         found_frame = true;

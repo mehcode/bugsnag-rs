@@ -1,5 +1,5 @@
 [package]
-name = "bugsnag-api"
+name = "bugsnag"
 version = "0.1.0"
 authors = ["Bastian Köcher <git@kchr.de>"]
 

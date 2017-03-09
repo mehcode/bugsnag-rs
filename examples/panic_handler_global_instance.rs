@@ -3,11 +3,11 @@
 //! We provide a class for wrapping the api object in the global state by using
 //! the lazy_static crate.
 
-extern crate bugsnag_api;
+extern crate bugsnag;
 #[macro_use]
 extern crate lazy_static;
 
-use bugsnag_api::{bugsnag, stacktrace};
+use bugsnag::stacktrace;
 
 use std::panic;
 use std::sync::{Arc, Mutex};

@@ -2,13 +2,14 @@
 //!
 //! This simple implementations consumes the api object. So, we can not change
 //! any parameters after registering the logger.
-extern crate bugsnag_api;
+
+extern crate bugsnag;
 #[macro_use]
 extern crate log;
 
 use log::{LogRecord, LogLevel, LogMetadata, SetLoggerError};
 
-use bugsnag_api::{bugsnag, stacktrace};
+use bugsnag::stacktrace;
 
 /// Our logger for bugsnag
 struct BugsnagLogger {
