@@ -1,4 +1,6 @@
-use super::{event, exception, notification, stacktrace, deviceinfo, appinfo};
+use super::{event, exception, notification, stacktrace, deviceinfo, appinfo, globalinstance};
+
+use std::sync::{Arc, Mutex};
 
 use serde_json;
 
@@ -7,9 +9,11 @@ use hyper::header::ContentType;
 
 const NOTIFY_URL: &'static str = "http://notify.bugsnag.com";
 
+#[derive(Debug, PartialEq)]
 pub enum Error {
     JsonConversionFailed,
     JsonTransferFailed,
+    GlobalInstanceExists,
 }
 
 #[derive(Debug, Serialize)]
@@ -28,13 +32,17 @@ pub struct Bugsnag {
 }
 
 impl Bugsnag {
-    pub fn new(api_key: &str, proj_source_dir: Option<String>) -> Bugsnag {
-        Bugsnag {
+    pub fn new(api_key: &str, proj_source_dir: Option<&str>) -> Result<Bugsnag, Error> {
+        if let Some(_) = Bugsnag::global_instance() {
+            return Err(Error::GlobalInstanceExists);
+        }
+
+        Ok(Bugsnag {
             api_key: api_key.to_owned(),
-            project_source_dir: proj_source_dir,
+            project_source_dir: proj_source_dir.map(|s| s.to_string()),
             device_info: deviceinfo::DeviceInfo::generate(),
             app_info: None,
-        }
+        })
     }
 
     pub fn notify(&self,
@@ -93,11 +101,32 @@ impl Bugsnag {
     pub fn reset_app_info(&mut self) {
         self.app_info = None;
     }
+
+    pub fn global_instance() -> Option<Arc<Mutex<Bugsnag>>> {
+        match globalinstance::get().lock() {
+            Ok(mut res) => res.instance(),
+            Err(_) => None,
+        }
+    }
+
+    pub fn reset_global_instance() {
+        if let Ok(mut res) = globalinstance::get().lock() {
+            res.reset_instance()
+        }
+    }
+
+    pub fn to_global_instance(self) {
+        if let Ok(mut res) = globalinstance::get().lock() {
+            if !res.has_instance() {
+                res.set_instance(self)
+            }
+        }
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::Severity;
+    use super::{Bugsnag, Severity, Error};
     use serde_test::{Token, assert_ser_tokens};
 
     #[test]
@@ -119,5 +148,51 @@ mod tests {
         let severity = Severity::Warning;
 
         assert_ser_tokens(&severity, &[Token::EnumUnit("Severity", "warning")]);
+    }
+
+    #[test]
+    fn test_global_instance_create() {
+        let bugsnag = Bugsnag::new("my-api-key", None).unwrap();
+        bugsnag.to_global_instance();
+
+        let instance = Bugsnag::global_instance();
+        assert!(instance.is_some());
+
+        let instance_unpacked = instance.unwrap();
+        assert!(instance_unpacked.lock().is_ok());
+
+        Bugsnag::reset_global_instance();
+    }
+
+    #[test]
+    fn test_new_with_existing_global_instance() {
+        let bugsnag = Bugsnag::new("my-api-key", None).unwrap();
+        bugsnag.to_global_instance();
+
+        assert_eq!(Bugsnag::new("my-second-api-key", None).err().unwrap(),
+                   Error::GlobalInstanceExists);
+        Bugsnag::reset_global_instance();
+    }
+
+    #[test]
+    fn test_global_instance_reset() {
+        let bugsnag = Bugsnag::new("my-api-key", None).unwrap();
+        bugsnag.to_global_instance();
+        Bugsnag::reset_global_instance();
+
+        assert!(Bugsnag::global_instance().is_none());
+    }
+
+    #[test]
+    fn test_new_after_global_instance_reset() {
+        let bugsnag = Bugsnag::new("my-api-key", None).unwrap();
+        bugsnag.to_global_instance();
+        Bugsnag::reset_global_instance();
+
+        assert!(Bugsnag::global_instance().is_none());
+        let bugsnag_option = Bugsnag::new("my-api-key", Some("path"));
+        assert!(bugsnag_option.is_ok());
+        assert!(bugsnag_option.unwrap().get_project_source_dir().is_some());
+        Bugsnag::reset_global_instance();
     }
 }

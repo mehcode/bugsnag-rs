@@ -6,6 +6,8 @@ extern crate serde_test;
 extern crate backtrace;
 extern crate hyper;
 extern crate sys_info;
+#[macro_use]
+extern crate lazy_static;
 
 mod event;
 mod notification;
@@ -14,3 +16,4 @@ mod exception;
 pub mod bugsnag;
 mod deviceinfo;
 mod appinfo;
+mod globalinstance;
