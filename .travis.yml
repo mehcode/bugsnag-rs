@@ -25,23 +25,9 @@ script:
       travis-cargo test &&
       travis-cargo bench
 
-after_success: |
-  wget https://github.com/SimonKagstrom/kcov/archive/master.tar.gz &&
-  tar xzf master.tar.gz &&
-  cd kcov-master &&
-  mkdir build &&
-  cd build &&
-  cmake .. &&
-  make &&
-  sudo make install &&
-  cd ../.. &&
-  rm -rf kcov-master &&
-  for file in target/debug/*; do mkdir -p "target/cov/$(basename $file)"; kcov --exclude-pattern=/.cargo,/usr/lib --verify "target/cov/$(basename $file)" "$file"; done &&
-  bash <(curl -s https://codecov.io/bash) &&
-  echo "Uploaded code coverage"
+after_success: 
+  - travis-cargo coveralls --no-sudo --verify
 
 env:
   global:
-    # override the default `--features unstable` used for the nightly branch (optional)
-    #- TRAVIS_CARGO_NIGHTLY_FEATURE=nightly
-    # encrypted github token for doc upload (see `GH_TOKEN` link above)
+    - RUST_TEST_THREADS=1
