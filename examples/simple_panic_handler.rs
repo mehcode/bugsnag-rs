@@ -1,13 +1,15 @@
+//! An example showing the integration of the bugsnag api for a panic handler.
+//!
+//! This simple implementations consumes the api object. So, we can not change
+//! any parameters after registering the panic handler.
 extern crate bugsnag_api;
-#[macro_use]
-extern crate lazy_static;
 
 use bugsnag_api::{bugsnag, stacktrace};
 
 use std::panic;
 
-// The panic handler consumes the api object, so no further modifications to
-// the object are possible
+/// The panic handler consumes the api object, so no further modifications to
+/// the object are possible
 fn register_panic_handler(api: bugsnag::Bugsnag) {
     panic::set_hook(Box::new(move |info| {
         let message = match info.payload().downcast_ref::<&str>() {
