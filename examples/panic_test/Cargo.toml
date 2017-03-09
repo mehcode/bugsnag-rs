@@ -1,7 +1,0 @@
-[package]
-name = "panic_test"
-version = "0.1.0"
-authors = ["Bastian Köcher <git@kchr.de>"]
-
-[dependencies]
-bugsnag-api = { path = "../../" }
