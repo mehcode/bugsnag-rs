@@ -3,35 +3,30 @@ language: rust
 addons:
   apt:
     packages:
-      - libcurl4-openssl-dev
-      - libelf-dev
-      - libdw-dev
-      - binutils-dev
-      - cmake
+    - libcurl4-openssl-dev
+    - libelf-dev
+    - libdw-dev
+    - binutils-dev
+    - cmake
     sources:
-      - kalakris-cmake
-
-# run builds for all the trains (and more)
+    - kalakris-cmake
 rust:
-  - beta
-  - stable
-
-# load cargo-travis
+- beta
+- stable
 before_script:
-  - |
-      cargo install cargo-travis &&
-      export PATH=$HOME/.cargo/bin:$PATH
-
-# the main build
+- |
+  cargo install cargo-travis &&
+  export PATH=$HOME/.cargo/bin:$PATH
 script:
-  - |
-      cargo build &&
-      cargo test &&
-      cargo bench     
-
-after_success: 
-  - cargo coveralls
-
+- "cargo build &&\ncargo test &&\ncargo bench     \n"
+after_success:
+- cargo coveralls
+- cargo doc \
+    && echo '<meta http-equiv=refresh content=0;url=bugsnag/index.html>' > target/doc/index.html && \
+    pip install 'ghp-import' --user && \
+    ghp-import -n target/doc && \
+    git push -qf https://${TRAVIS_DEPLOYMENT_KEY}@github.com/${TRAVIS_REPO_SLUG}.git gh-pages
 env:
   global:
-    - RUST_TEST_THREADS=1
+  - RUST_TEST_THREADS=1
+  - secure: AuCTt1ZXtHPeD8al1UvIXs8PA9SeYvm2PnuyzHEXE0oAMi4fwrCttbOA/FG24JUSChQi0UnW/Urb8FQUoFvDp2SiDQQfgx7D4lFQ8k341OnPjvkX4Gsrzo8sXCkTR5IRin3L6TQjsk607LS74QrZOacJspr0vB/RpRhTyP0iH1MGbmL+1FOkzPrWwwOyTehHix/vPp4CKWPO/b0EyLXm9aeH+dD9/6oLm1LPoiAXzEAikegpvKGH3arkjiDyJWCOu9dlL+RmnmPhCSX3p26+NOrjUfbgEPc2JMEsI41eCprKlUeessqMUa+AhCdodYjxnaOOhlQBKpSwWcrTu3sxz8V4t5wMKoLa90Jrpxbh4tfv2jGKscKXwbqG5lG9I3pHlSbnxAyaAEfKY3wLJfVGvO3isHu1N43kaNb/blKM6KYXV3k2Cs7GZQo1BSGNi5Oc7Zf3zqC7X3wcELxYYrahpXvpDtVbwlC5gu21j4GLCeMUp3ro89VEIbqBByFvaaH3lel2LlJ/IRXeHuV5PbFFd9biQlWRynvvn+E/gfPe/6URnQoNFCvYoAr7PKi+A+eb8RknAME4T6sdJiI2Px2S0CFuzPBSsAnSORxirU5/LnOmKTOJeU59kuBuxGPtz/yHZZHAh0qfTGDkmDLYkUV2zvipPraHXXZbKKfaK0QW8NI=
