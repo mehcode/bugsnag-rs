@@ -1,13 +1,17 @@
 [package]
 name = "bugsnag"
-version = "0.1.0"
+version = "0.1.1"
 authors = ["Bastian Köcher <git@kchr.de>"]
 description = "The api of Bugsnag in rust."
+documentation = "https://docs.rs/bugsnag/"
 homepage = "https://github.com/superscale/bugsnag-rs"
 repository = "https://github.com/superscale/bugsnag-rs"
 readme = "README.md"
 keywords = ["bug", "reporting"]
 license = "MIT"
+
+[badges]
+travis-ci = { repository = "https://github.com/superscale/bugsnag-rs", branch = "master" }
 
 [dependencies]
 hyper = "0.5"
