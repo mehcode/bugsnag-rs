@@ -1,6 +1,16 @@
+//! Module for creating a stacktrace in the Bugsnag format.
+//!
+//! # Example
+//! ```
+//! use bugsnag::stacktrace::create_stacktrace;
+//! let stacktrace = create_stacktrace(&Some(env!("CARGO_MANIFEST_DIR").to_string()));
+//! assert!(!stacktrace.is_empty())
+//! ```
+
 use std::path::Path;
 use backtrace::{self, Symbol};
 
+/// Struct for storing the one frame of the stacktrace.
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Frame {
@@ -20,6 +30,12 @@ impl Frame {
         }
     }
 
+    /// Converts from a backtrace::Symbol into a Frame
+    ///
+    /// # Arguments
+    ///
+    /// * `trace` - The backtrace::Symbol with all the information for the frame.
+    /// * `proj_source_dir` - The path to the project source directory.
     pub fn from_symbol(trace: &Symbol, proj_source_dir: &Option<String>) -> Frame {
         let file = trace.filename()
             .unwrap_or_else(|| Path::new(""))
@@ -40,6 +56,22 @@ impl Frame {
     }
 }
 
+/// Create a stacktrace and returns this stacktrace as vector of Frames
+///
+/// # Arguments
+///
+/// * `proj_source_dir` - The source directory of the project. This directory
+///                       will be used to determine if a frame belongs to the
+///                       project.
+///                       If `None` is passed, all Frames are marked as external
+///                       project files.
+///
+/// # Remarks
+///
+/// Bugsnag will use the information if a frame belongs to the project to hide
+/// unnecessary information in the web interface.
+/// The path to the project source directory can be obtained by calling
+/// `env!("CARGO_MANIFEST_DIR")`.
 pub fn create_stacktrace(proj_source_dir: &Option<String>) -> Vec<Frame> {
     let mut result: Vec<Frame> = Vec::new();
 

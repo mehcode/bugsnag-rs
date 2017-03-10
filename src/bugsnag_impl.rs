@@ -9,7 +9,10 @@ const NOTIFY_URL: &'static str = "http://notify.bugsnag.com";
 
 #[derive(Debug, PartialEq)]
 pub enum Error {
+    /// The conversion to json failed.
     JsonConversionFailed,
+    /// While transferring the json to Bugsnag, a problem occurred.
+    /// This error does not reflect if Bugsnag rejected the json.
     JsonTransferFailed,
 }
 
@@ -29,6 +32,7 @@ pub struct Bugsnag {
 }
 
 impl Bugsnag {
+    /// Creates a new instance of the Bugsnag api
     pub fn new(api_key: &str, proj_source_dir: Option<&str>) -> Bugsnag {
         Bugsnag {
             api_key: api_key.to_owned(),
@@ -38,6 +42,8 @@ impl Bugsnag {
         }
     }
 
+    /// Converts all data into the Bugsnag json formats and sends this json to
+    /// the Bugsnag web interface.
     pub fn notify(&self,
                   error_class: &str,
                   message: &str,
@@ -70,10 +76,13 @@ impl Bugsnag {
         }
     }
 
+    /// Returns the path to the project source directory
     pub fn get_project_source_dir(&self) -> &Option<String> {
         &self.project_source_dir
     }
 
+    /// Sets information about the device. These information will be send to
+    /// Bugsnag when notify is called.
     pub fn set_device_info(&mut self, hostname: Option<&str>, version: Option<&str>) {
         if let Some(name) = hostname {
             self.device_info.set_hostname(name);
@@ -84,6 +93,8 @@ impl Bugsnag {
         }
     }
 
+    /// Sets information about the application that uses this api. These information
+    /// will be send to Bugsnag when notify is called.
     pub fn set_app_info(&mut self,
                         version: Option<&str>,
                         release_stage: Option<&str>,
