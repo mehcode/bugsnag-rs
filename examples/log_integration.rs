@@ -46,12 +46,16 @@ impl log::Log for BugsnagLogger {
     fn log(&self, record: &LogRecord) {
         if self.enabled(record.metadata()) {
             let level = convert_log_level(record.metadata().level());
-            let stacktrace = stacktrace::create_stacktrace(self.api.get_project_source_dir());
+            let project_path = concat!(env!("CARGO_MANIFEST_DIR"), "/examples");
+            let stacktrace = stacktrace::create_stacktrace(Some(&|file, method| {
+                file.starts_with(project_path) &&
+                    !method.contains("register_panic_handler_with_global_instance")
+            }));
             self.api.notify(record.metadata().level().to_string().as_str(),
                             record.args().to_string().as_str(),
                             level,
                             &stacktrace,
-                            None);
+                            None).unwrap();
         }
     }
 }
@@ -59,13 +63,13 @@ impl log::Log for BugsnagLogger {
 
 
 fn main() {
-    let mut api = bugsnag::Bugsnag::new("api-key", Some(env!("CARGO_MANIFEST_DIR")));
+    let mut api = bugsnag::Bugsnag::new("api-key", concat!(env!("CARGO_MANIFEST_DIR"), "/examples"));
     api.set_app_info(Some(env!("CARGO_PKG_VERSION")),
                      Some("development"),
                      Some("rust"));
 
     // initialize the logger
-    BugsnagLogger::init(api, LogLevel::Warn);
+    BugsnagLogger::init(api, LogLevel::Warn).unwrap();
 
     // the following two messages should not show up in bugsnag, because
     // we set the maximum log level to errors

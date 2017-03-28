@@ -3,7 +3,8 @@
 //! # Example
 //! ```
 //! use bugsnag::stacktrace::create_stacktrace;
-//! let stacktrace = create_stacktrace(&Some(env!("CARGO_MANIFEST_DIR").to_string()));
+//! let stacktrace =
+//!     create_stacktrace(Some(&|file, _| file.starts_with(env!("CARGO_MANIFEST_DIR"))));
 //! assert!(!stacktrace.is_empty())
 //! ```
 
@@ -35,8 +36,10 @@ impl Frame {
     /// # Arguments
     ///
     /// * `trace` - The backtrace::Symbol with all the information for the frame.
-    /// * `proj_source_dir` - The path to the project source directory.
-    pub fn from_symbol(trace: &Symbol, proj_source_dir: &Option<String>) -> Frame {
+    /// * `in_project_func` - Function to check if a file and a function belongs to the project.
+    pub fn from_symbol<F>(trace: &Symbol, in_project_func: Option<&F>) -> Frame
+        where F: Fn(&str, &str) -> bool
+    {
         let file = trace.filename()
             .unwrap_or_else(|| Path::new(""))
             .to_str()
@@ -47,9 +50,10 @@ impl Frame {
             None => "unknown".to_string(),
         };
 
-        let in_project = match *proj_source_dir {
-            Some(ref dir) => file.starts_with(dir.as_str()),
-            None => false,
+        let in_project = if let Some(func) = in_project_func {
+            func(file, method.as_str())
+        } else {
+            false
         };
 
         Frame::new(file, linenumber, method.as_str(), in_project)
@@ -60,24 +64,21 @@ impl Frame {
 ///
 /// # Arguments
 ///
-/// * `proj_source_dir` - The source directory of the project. This directory
-///                       will be used to determine if a frame belongs to the
-///                       project.
-///                       If `None` is passed, all Frames are marked as external
-///                       project files.
+/// * `in_project` - A function that gets the following arguments (file, method). The function is
+///                  used to determine if a file and method belongs to the project.
 ///
 /// # Remarks
 ///
-/// Bugsnag will use the information if a frame belongs to the project to hide
+/// Bugsnag will use the information about a frame belonging to a project to hide
 /// unnecessary information in the web interface.
-/// The path to the project source directory can be obtained by calling
-/// `env!("CARGO_MANIFEST_DIR")`.
-pub fn create_stacktrace(proj_source_dir: &Option<String>) -> Vec<Frame> {
+pub fn create_stacktrace<F>(in_project: Option<&F>) -> Vec<Frame>
+    where F: Fn(&str, &str) -> bool
+{
     let mut result: Vec<Frame> = Vec::new();
 
     backtrace::trace(|frame| {
         backtrace::resolve(frame.ip(),
-                           |symbol| result.push(Frame::from_symbol(&symbol, proj_source_dir)));
+                           |symbol| result.push(Frame::from_symbol(&symbol, in_project)));
         true
     });
 
@@ -91,7 +92,8 @@ mod tests {
 
     #[test]
     fn test_create_stacktrace() {
-        let frames = create_stacktrace(&Some(env!("CARGO_MANIFEST_DIR").to_string()));
+        let frames =
+            create_stacktrace(Some(&|file, _| file.starts_with(env!("CARGO_MANIFEST_DIR"))));
         let mut found_frame = false;
         let file = file!();
 
@@ -128,5 +130,26 @@ mod tests {
                             Token::Str("inProject"),
                             Token::Bool(false),
                             Token::StructEnd]);
+    }
+
+    #[test]
+    fn test_create_stacktrace_with_ignore() {
+        let frames =
+            create_stacktrace(&|_, method| !method.contains("test_create_stacktrace_with_ignore"));
+        let mut found_frame = false;
+        let file = file!();
+
+        for frame in frames {
+            if frame.method == "bugsnag::stacktrace::tests::test_create_stacktrace_with_ignore" {
+                if frame.file.ends_with(file) {
+                    if frame.in_project == false {
+                        found_frame = true;
+                        break;
+                    }
+                }
+            }
+        }
+
+        assert!(found_frame);
     }
 }

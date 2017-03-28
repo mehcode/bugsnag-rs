@@ -59,14 +59,21 @@ fn register_panic_handler_with_global_instance(api: bugsnag::Bugsnag) {
     to_global_instance(api);
 
     panic::set_hook(Box::new(|info| {
-        let message = match info.payload().downcast_ref::<&str>() {
-            Some(msg) => msg,
-            None => "unknown error!",
+        let message = if info.payload().is::<String>() {
+            info.payload().downcast_ref::<String>().unwrap().as_str()
+        } else if info.payload().is::<&str>() {
+            info.payload().downcast_ref::<&str>().unwrap()
+        } else {
+            "Unknown error!"
         };
 
         if let Some(api_mtx) = global_instance() {
             if let Ok(api) = api_mtx.lock() {
-                let stacktrace = stacktrace::create_stacktrace(api.get_project_source_dir());
+                let project_path = concat!(env!("CARGO_MANIFEST_DIR"), "/examples");
+                let stacktrace = stacktrace::create_stacktrace(Some(&|file, method| {
+                    file.starts_with(project_path) &&
+                    !method.contains("register_panic_handler_with_global_instance")
+                }));
 
                 if api.notify("Panic",
                             message,
@@ -82,7 +89,8 @@ fn register_panic_handler_with_global_instance(api: bugsnag::Bugsnag) {
 }
 
 fn main() {
-    let mut api = bugsnag::Bugsnag::new("api-key", Some(env!("CARGO_MANIFEST_DIR")));
+    let mut api = bugsnag::Bugsnag::new("api-key",
+                                        concat!(env!("CARGO_MANIFEST_DIR"), "/examples"));
     api.set_app_info(Some(env!("CARGO_PKG_VERSION")),
                      Some("development"),
                      Some("rust"));

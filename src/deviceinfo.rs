@@ -53,4 +53,21 @@ mod tests {
                             Token::Str("testmachine"),
                             Token::StructEnd]);
     }
+
+    #[test]
+    fn test_deviceinfo_to_json_with_set() {
+        let mut info = DeviceInfo::generate();
+        info.set_hostname("testmachine3");
+        info.set_os_version("3.0.0");
+
+        assert_ser_tokens(&info,
+                          &[Token::StructStart("DeviceInfo", 2),
+                            Token::StructSep,
+                            Token::Str("osVersion"),
+                            Token::Str("3.0.0"),
+                            Token::StructSep,
+                            Token::Str("hostname"),
+                            Token::Str("testmachine3"),
+                            Token::StructEnd]);
+    }
 }

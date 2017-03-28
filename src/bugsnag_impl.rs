@@ -26,19 +26,19 @@ pub enum Severity {
 
 pub struct Bugsnag {
     api_key: String,
-    project_source_dir: Option<String>,
     device_info: deviceinfo::DeviceInfo,
     app_info: Option<appinfo::AppInfo>,
+    project_source_dir: String,
 }
 
 impl Bugsnag {
     /// Creates a new instance of the Bugsnag api
-    pub fn new(api_key: &str, proj_source_dir: Option<&str>) -> Bugsnag {
+    pub fn new(api_key: &str, project_source_dir: &str) -> Bugsnag {
         Bugsnag {
             api_key: api_key.to_owned(),
-            project_source_dir: proj_source_dir.map(|s| s.to_string()),
             device_info: deviceinfo::DeviceInfo::generate(),
             app_info: None,
+            project_source_dir: project_source_dir.to_owned(),
         }
     }
 
@@ -76,11 +76,6 @@ impl Bugsnag {
         }
     }
 
-    /// Returns the path to the project source directory
-    pub fn get_project_source_dir(&self) -> &Option<String> {
-        &self.project_source_dir
-    }
-
     /// Sets information about the device. These information will be send to
     /// Bugsnag when notify is called.
     pub fn set_device_info(&mut self, hostname: Option<&str>, version: Option<&str>) {
@@ -105,11 +100,15 @@ impl Bugsnag {
     pub fn reset_app_info(&mut self) {
         self.app_info = None;
     }
+
+    pub fn get_project_source_dir(&self) -> &String {
+        &self.project_source_dir
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{Bugsnag, Severity};
+    use super::{Severity, Bugsnag};
     use serde_test::{Token, assert_ser_tokens};
 
     #[test]
@@ -134,9 +133,8 @@ mod tests {
     }
 
     #[test]
-    fn test_get_project_source_dir() {
-        let api = Bugsnag::new("api-key", Some("my/project/path"));
-        let source_dir = api.get_project_source_dir().as_ref().unwrap();
-        assert_eq!(source_dir, "my/project/path");
+    fn test_get_project_dir() {
+        let api = Bugsnag::new("api-key", "my-dir");
+        assert_eq!(api.get_project_source_dir(), "my-dir");
     }
 }
