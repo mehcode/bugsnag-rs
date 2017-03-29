@@ -5,33 +5,13 @@
 
 extern crate bugsnag;
 
-use bugsnag::stacktrace;
-
 use std::panic;
 
 /// The panic handler consumes the api object, so no further modifications to
 /// the object are possible
 fn register_panic_handler(api: bugsnag::Bugsnag) {
     panic::set_hook(Box::new(move |info| {
-        let message = if info.payload().is::<String>() {
-            info.payload().downcast_ref::<String>().unwrap().as_str()
-        } else if info.payload().is::<&str>() {
-            info.payload().downcast_ref::<&str>().unwrap()
-        } else {
-            "Unknown error!"
-        };
-
-        let project_path = concat!(env!("CARGO_MANIFEST_DIR"), "/examples");
-        let stacktrace = stacktrace::create_stacktrace(Some(&|file, method| {
-            file.starts_with(project_path) && !method.contains("register_panic_handler")
-        }));
-
-        if api.notify("Panic",
-                    message,
-                    bugsnag::Severity::Error,
-                    &stacktrace,
-                    None)
-            .is_err() {
+        if bugsnag::panic::handle(&api, &info, Some(&["register_panic_handler"])).is_err() {
             println!("Error at notifying bugsnag!");
         }
     }));

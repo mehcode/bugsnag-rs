@@ -9,8 +9,6 @@ extern crate log;
 
 use log::{LogRecord, LogLevel, LogMetadata, SetLoggerError};
 
-use bugsnag::stacktrace;
-
 /// Our logger for bugsnag
 struct BugsnagLogger {
     max_loglevel: LogLevel,
@@ -46,16 +44,13 @@ impl log::Log for BugsnagLogger {
     fn log(&self, record: &LogRecord) {
         if self.enabled(record.metadata()) {
             let level = convert_log_level(record.metadata().level());
-            let project_path = concat!(env!("CARGO_MANIFEST_DIR"), "/examples");
-            let stacktrace = stacktrace::create_stacktrace(Some(&|file, method| {
-                file.starts_with(project_path) &&
-                    !method.contains("register_panic_handler_with_global_instance")
-            }));
-            self.api.notify(record.metadata().level().to_string().as_str(),
-                            record.args().to_string().as_str(),
-                            level,
-                            &stacktrace,
-                            None).unwrap();
+            self.api
+                .notify(record.metadata().level().to_string().as_str(),
+                        record.args().to_string().as_str(),
+                        level,
+                        None,
+                        None)
+                .unwrap();
         }
     }
 }

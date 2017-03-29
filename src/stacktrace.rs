@@ -1,12 +1,4 @@
 //! Module for creating a stacktrace in the Bugsnag format.
-//!
-//! # Example
-//! ```
-//! use bugsnag::stacktrace::create_stacktrace;
-//! let stacktrace =
-//!     create_stacktrace(Some(&|file, _| file.starts_with(env!("CARGO_MANIFEST_DIR"))));
-//! assert!(!stacktrace.is_empty())
-//! ```
 
 use std::path::Path;
 use backtrace::{self, Symbol};
@@ -37,7 +29,7 @@ impl Frame {
     ///
     /// * `trace` - The backtrace::Symbol with all the information for the frame.
     /// * `in_project_func` - Function to check if a file and a function belongs to the project.
-    pub fn from_symbol<F>(trace: &Symbol, in_project_func: Option<&F>) -> Frame
+    pub fn from_symbol<F>(trace: &Symbol, in_project: &F) -> Frame
         where F: Fn(&str, &str) -> bool
     {
         let file = trace.filename()
@@ -50,13 +42,7 @@ impl Frame {
             None => "unknown".to_string(),
         };
 
-        let in_project = if let Some(func) = in_project_func {
-            func(file, method.as_str())
-        } else {
-            false
-        };
-
-        Frame::new(file, linenumber, method.as_str(), in_project)
+        Frame::new(file, linenumber, method.as_str(), in_project(file, method.as_str()))
     }
 }
 
@@ -71,7 +57,7 @@ impl Frame {
 ///
 /// Bugsnag will use the information about a frame belonging to a project to hide
 /// unnecessary information in the web interface.
-pub fn create_stacktrace<F>(in_project: Option<&F>) -> Vec<Frame>
+pub fn create_stacktrace<F>(in_project: &F) -> Vec<Frame>
     where F: Fn(&str, &str) -> bool
 {
     let mut result: Vec<Frame> = Vec::new();
@@ -93,7 +79,7 @@ mod tests {
     #[test]
     fn test_create_stacktrace() {
         let frames =
-            create_stacktrace(Some(&|file, _| file.starts_with(env!("CARGO_MANIFEST_DIR"))));
+            create_stacktrace(&|file, _| file.starts_with(env!("CARGO_MANIFEST_DIR")));
         let mut found_frame = false;
         let file = file!();
 

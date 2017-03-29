@@ -7,8 +7,6 @@ extern crate bugsnag;
 #[macro_use]
 extern crate lazy_static;
 
-use bugsnag::stacktrace;
-
 use std::panic;
 use std::sync::{Arc, Mutex};
 
@@ -58,31 +56,13 @@ pub fn to_global_instance(api: bugsnag::Bugsnag) {
 fn register_panic_handler_with_global_instance(api: bugsnag::Bugsnag) {
     to_global_instance(api);
 
-    panic::set_hook(Box::new(|info| {
-        let message = if info.payload().is::<String>() {
-            info.payload().downcast_ref::<String>().unwrap().as_str()
-        } else if info.payload().is::<&str>() {
-            info.payload().downcast_ref::<&str>().unwrap()
-        } else {
-            "Unknown error!"
-        };
-
-        if let Some(api_mtx) = global_instance() {
-            if let Ok(api) = api_mtx.lock() {
-                let project_path = concat!(env!("CARGO_MANIFEST_DIR"), "/examples");
-                let stacktrace = stacktrace::create_stacktrace(Some(&|file, method| {
-                    file.starts_with(project_path) &&
-                    !method.contains("register_panic_handler_with_global_instance")
-                }));
-
-                if api.notify("Panic",
-                            message,
-                            bugsnag::Severity::Error,
-                            &stacktrace,
-                            None)
-                    .is_err() {
-                    println!("Error at notifying bugsnag!");
-                }
+    panic::set_hook(Box::new(|info| if let Some(api_mtx) = global_instance() {
+        if let Ok(api) = api_mtx.lock() {
+            if bugsnag::panic::handle(&api,
+                                      &info,
+                                      Some(&["register_panic_handler_with_global_instance"]))
+                .is_err() {
+                println!("Error at notifying bugsnag!");
             }
         }
     }));

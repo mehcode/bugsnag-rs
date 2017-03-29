@@ -18,11 +18,19 @@ api.set_app_info(Some(env!("CARGO_PKG_VERSION")),
                  Some("development"),
                  Some("rust"));
 
-let stacktrace = bugsnag::stacktrace::create_stacktrace(
-    Some(&|file, _| file.starts_with(env!("CARGO_MANIFEST_DIR"))));
-
 api.notify("Info", "This is a message from the rust bugsnag api.",
-           bugsnag::Severity::Info, &stacktrace, None); 
+           bugsnag::Severity::Info, None, None); 
+```
+
+Or in a panic handler you could do the following:
+
+```rust
+
+use bugsnag;
+let mut api = bugsnag::Bugsnag::new("api-key", env!("CARGO_MANIFEST_DIR"));
+
+bugsnag::panic::handle(&api, panic_info, None);
+
 ```
 
 For more examples on how to integrate bugsnag into a project, the examples folder provides some reference implementations.

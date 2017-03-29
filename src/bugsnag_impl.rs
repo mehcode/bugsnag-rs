@@ -44,14 +44,24 @@ impl Bugsnag {
 
     /// Converts all data into the Bugsnag json formats and sends this json to
     /// the Bugsnag web interface.
+    ///
+    /// # Arguments
+    ///
+    /// * `methods_to_ignore` - A list of methods names. These methods are marked as not belonging
+    ///                         to the project when the stacktrace is generated. The Bugsnag web
+    ///                         interface will use this information to hide unnecessary data.
+    ///                         To check if a method should be marked as not belonging to the
+    ///                         project, the method name reported by the stacktrace is checked if it
+    ///                         contains a method name in this list.
     pub fn notify(&self,
                   error_class: &str,
                   message: &str,
                   severity: Severity,
-                  stacktrace: &[stacktrace::Frame],
+                  methods_to_ignore: Option<&[&str]>,
                   context: Option<&str>)
                   -> Result<(), Error> {
-        let exceptions = vec![exception::Exception::new(error_class, message, stacktrace)];
+        let stacktrace = self.create_stacktrace(methods_to_ignore);
+        let exceptions = vec![exception::Exception::new(error_class, message, &stacktrace)];
         let events = vec![event::Event::new(&exceptions,
                                             severity,
                                             context,
@@ -62,6 +72,23 @@ impl Bugsnag {
         match serde_json::to_string(&notification) {
             Ok(json) => self.send(json.as_str()),
             Err(_) => Err(Error::JsonTransferFailed),
+        }
+    }
+
+    fn create_stacktrace(&self, methods_to_ignore: Option<&[&str]>) -> Vec<stacktrace::Frame> {
+        if let Some(ignore) = methods_to_ignore {
+            let in_project_check = |file: &str, method: &str| {
+                file.starts_with(self.project_source_dir.as_str()) &&
+                ignore.iter().find(|check| !method.contains(*check)).is_some()
+            };
+
+            stacktrace::create_stacktrace(&in_project_check)
+        } else {
+            let in_project_check =
+                |file: &str, _: &str| file.starts_with(self.project_source_dir.as_str());
+
+
+            stacktrace::create_stacktrace(&in_project_check)
         }
     }
 
