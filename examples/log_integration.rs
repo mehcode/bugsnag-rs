@@ -9,8 +9,6 @@ extern crate log;
 
 use log::{LogRecord, LogLevel, LogMetadata, SetLoggerError};
 
-use bugsnag::stacktrace;
-
 /// Our logger for bugsnag
 struct BugsnagLogger {
     max_loglevel: LogLevel,
@@ -46,12 +44,13 @@ impl log::Log for BugsnagLogger {
     fn log(&self, record: &LogRecord) {
         if self.enabled(record.metadata()) {
             let level = convert_log_level(record.metadata().level());
-            let stacktrace = stacktrace::create_stacktrace(self.api.get_project_source_dir());
-            self.api.notify(record.metadata().level().to_string().as_str(),
-                            record.args().to_string().as_str(),
-                            level,
-                            &stacktrace,
-                            None);
+            self.api
+                .notify(record.metadata().level().to_string().as_str(),
+                        record.args().to_string().as_str(),
+                        level,
+                        None,
+                        None)
+                .unwrap();
         }
     }
 }
@@ -59,13 +58,13 @@ impl log::Log for BugsnagLogger {
 
 
 fn main() {
-    let mut api = bugsnag::Bugsnag::new("api-key", Some(env!("CARGO_MANIFEST_DIR")));
+    let mut api = bugsnag::Bugsnag::new("api-key", concat!(env!("CARGO_MANIFEST_DIR"), "/examples"));
     api.set_app_info(Some(env!("CARGO_PKG_VERSION")),
                      Some("development"),
                      Some("rust"));
 
     // initialize the logger
-    BugsnagLogger::init(api, LogLevel::Warn);
+    BugsnagLogger::init(api, LogLevel::Warn).unwrap();
 
     // the following two messages should not show up in bugsnag, because
     // we set the maximum log level to errors

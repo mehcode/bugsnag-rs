@@ -26,32 +26,42 @@ pub enum Severity {
 
 pub struct Bugsnag {
     api_key: String,
-    project_source_dir: Option<String>,
     device_info: deviceinfo::DeviceInfo,
     app_info: Option<appinfo::AppInfo>,
+    project_source_dir: String,
 }
 
 impl Bugsnag {
     /// Creates a new instance of the Bugsnag api
-    pub fn new(api_key: &str, proj_source_dir: Option<&str>) -> Bugsnag {
+    pub fn new(api_key: &str, project_source_dir: &str) -> Bugsnag {
         Bugsnag {
             api_key: api_key.to_owned(),
-            project_source_dir: proj_source_dir.map(|s| s.to_string()),
             device_info: deviceinfo::DeviceInfo::generate(),
             app_info: None,
+            project_source_dir: project_source_dir.to_owned(),
         }
     }
 
     /// Converts all data into the Bugsnag json formats and sends this json to
     /// the Bugsnag web interface.
+    ///
+    /// # Arguments
+    ///
+    /// * `methods_to_ignore` - A list of methods names. These methods are marked as not belonging
+    ///                         to the project when the stacktrace is generated. The Bugsnag web
+    ///                         interface will use this information to hide unnecessary data.
+    ///                         To check if a method should be marked as not belonging to the
+    ///                         project, the method name reported by the stacktrace is checked if it
+    ///                         contains a method name in this list.
     pub fn notify(&self,
                   error_class: &str,
                   message: &str,
                   severity: Severity,
-                  stacktrace: &[stacktrace::Frame],
+                  methods_to_ignore: Option<&[&str]>,
                   context: Option<&str>)
                   -> Result<(), Error> {
-        let exceptions = vec![exception::Exception::new(error_class, message, stacktrace)];
+        let stacktrace = self.create_stacktrace(methods_to_ignore);
+        let exceptions = vec![exception::Exception::new(error_class, message, &stacktrace)];
         let events = vec![event::Event::new(&exceptions,
                                             severity,
                                             context,
@@ -65,6 +75,23 @@ impl Bugsnag {
         }
     }
 
+    fn create_stacktrace(&self, methods_to_ignore: Option<&[&str]>) -> Vec<stacktrace::Frame> {
+        if let Some(ignore) = methods_to_ignore {
+            let in_project_check = |file: &str, method: &str| {
+                file.starts_with(self.project_source_dir.as_str()) &&
+                ignore.iter().find(|check| !method.contains(*check)).is_some()
+            };
+
+            stacktrace::create_stacktrace(&in_project_check)
+        } else {
+            let in_project_check =
+                |file: &str, _: &str| file.starts_with(self.project_source_dir.as_str());
+
+
+            stacktrace::create_stacktrace(&in_project_check)
+        }
+    }
+
     fn send(&self, json: &str) -> Result<(), Error> {
         match Client::new()
             .post(NOTIFY_URL)
@@ -74,11 +101,6 @@ impl Bugsnag {
             Ok(_) => Ok(()),
             Err(_) => Err(Error::JsonTransferFailed),
         }
-    }
-
-    /// Returns the path to the project source directory
-    pub fn get_project_source_dir(&self) -> &Option<String> {
-        &self.project_source_dir
     }
 
     /// Sets information about the device. These information will be send to
@@ -105,11 +127,15 @@ impl Bugsnag {
     pub fn reset_app_info(&mut self) {
         self.app_info = None;
     }
+
+    pub fn get_project_source_dir(&self) -> &String {
+        &self.project_source_dir
+    }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{Bugsnag, Severity};
+    use super::{Severity, Bugsnag};
     use serde_test::{Token, assert_ser_tokens};
 
     #[test]
@@ -134,9 +160,8 @@ mod tests {
     }
 
     #[test]
-    fn test_get_project_source_dir() {
-        let api = Bugsnag::new("api-key", Some("my/project/path"));
-        let source_dir = api.get_project_source_dir().as_ref().unwrap();
-        assert_eq!(source_dir, "my/project/path");
+    fn test_get_project_dir() {
+        let api = Bugsnag::new("api-key", "my-dir");
+        assert_eq!(api.get_project_source_dir(), "my-dir");
     }
 }
