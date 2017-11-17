@@ -13,8 +13,8 @@
 //!                  Some("development"),
 //!                  Some("rust"));
 //!
-//! api.notify("Info", "This is a message from the rust bugsnag api.",
-//!            bugsnag::Severity::Info, None, None);
+//! api.notify("Info", "This is a message from the rust bugsnag api.")
+//!       .severity(bugsnag::Severity::Info);
 //! ```
 //!
 //! For more examples on how to integrate bugsnag into a project, the examples

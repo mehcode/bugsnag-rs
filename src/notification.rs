@@ -37,7 +37,7 @@ impl<'a> Notification<'a> {
 #[cfg(test)]
 mod tests {
     use super::{Notification, NOTIFIER_NAME, NOTIFIER_URL, NOTIFIER_VERSION};
-    use super::super::{deviceinfo, event, exception, stacktrace, Severity};
+    use super::super::{deviceinfo, event, exception, stacktrace};
     use serde_test::{assert_ser_tokens, Token};
 
     #[test]
@@ -81,7 +81,7 @@ mod tests {
         let device = deviceinfo::DeviceInfo::new("1.0.0", "testmachine");
         let app = None;
         let events = vec![
-            event::Event::new(&exceptions, Severity::Error, None, &device, &app),
+            event::Event::new(&exceptions, None, None, None, &device, &app),
         ];
 
         let notification = Notification::new("safe-api-key", &events);
@@ -110,7 +110,7 @@ mod tests {
                 Token::Str("events"),
                 Token::SeqStart(Some(1)),
                 Token::SeqSep,
-                Token::StructStart("Event", 4),
+                Token::StructStart("Event", 3),
                 Token::StructSep,
                 Token::Str("payloadVersion"),
                 Token::U32(event::PAYLOAD_VERSION),
@@ -146,9 +146,6 @@ mod tests {
                 Token::SeqEnd,
                 Token::StructEnd,
                 Token::SeqEnd,
-                Token::StructSep,
-                Token::Str("severity"),
-                Token::EnumUnit("Severity", "error"),
                 Token::StructSep,
                 Token::Str("device"),
                 Token::StructStart("DeviceInfo", 2),

@@ -87,9 +87,9 @@ mod tests {
 
     #[test]
     fn test_create_stacktrace() {
-        let frames = create_stacktrace(&|file, _| file.starts_with(env!("CARGO_MANIFEST_DIR")));
-        let mut found_frame = false;
         let file = file!();
+        let frames = create_stacktrace(&|f, _| f.ends_with(&file));
+        let mut found_frame = false;
 
         for frame in frames {
             if frame.method == "bugsnag::stacktrace::tests::test_create_stacktrace" {

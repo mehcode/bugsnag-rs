@@ -3,34 +3,37 @@ use super::Severity;
 use super::deviceinfo::DeviceInfo;
 use super::appinfo::AppInfo;
 
-pub const PAYLOAD_VERSION: u32 = 2;
+pub const PAYLOAD_VERSION: u32 = 4;
 
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Event<'a> {
     payload_version: u32,
     exceptions: &'a [Exception<'a>],
-    severity: Severity,
+    #[serde(skip_serializing_if = "Option::is_none")] severity: Option<&'a Severity>,
     #[serde(skip_serializing_if = "Option::is_none")] context: Option<&'a str>,
     device: &'a DeviceInfo,
     #[serde(skip_serializing_if = "Option::is_none")] app: &'a Option<AppInfo>,
+    #[serde(skip_serializing_if = "Option::is_none")] group_hash: Option<&'a str>,
 }
 
 impl<'a> Event<'a> {
     pub fn new(
         exceptions: &'a [Exception],
-        severity: Severity,
+        severity: Option<&'a Severity>,
         context: Option<&'a str>,
+        group_hash: Option<&'a str>,
         device: &'a DeviceInfo,
         app: &'a Option<AppInfo>,
     ) -> Event<'a> {
         Event {
             payload_version: PAYLOAD_VERSION,
-            exceptions: exceptions,
-            severity: severity,
-            context: context,
-            device: device,
-            app: app,
+            exceptions,
+            severity,
+            context,
+            device,
+            app,
+            group_hash,
         }
     }
 }
@@ -45,7 +48,7 @@ mod tests {
         let empty_vec = Vec::new();
         let device = DeviceInfo::new("1.0.0", "testmachine");
         let app = None;
-        let evt = Event::new(&empty_vec, Severity::Error, None, &device, &app);
+        let evt = Event::new(&empty_vec, Some(&Severity::Error), None, None, &device, &app);
 
         assert_ser_tokens(
             &evt,
@@ -60,6 +63,7 @@ mod tests {
                 Token::SeqEnd,
                 Token::StructSep,
                 Token::Str("severity"),
+                Token::Option(true),
                 Token::EnumUnit("Severity", "error"),
                 Token::StructSep,
                 Token::Str("device"),
@@ -83,8 +87,9 @@ mod tests {
         let app = None;
         let evt = Event::new(
             &empty_vec,
-            Severity::Error,
+            Some(&Severity::Error),
             Some("test/context"),
+            None,
             &device,
             &app,
         );
@@ -102,6 +107,7 @@ mod tests {
                 Token::SeqEnd,
                 Token::StructSep,
                 Token::Str("severity"),
+                Token::Option(true),
                 Token::EnumUnit("Severity", "error"),
                 Token::StructSep,
                 Token::Str("context"),
@@ -127,7 +133,7 @@ mod tests {
         let empty_vec = Vec::new();
         let device = DeviceInfo::new("1.0.0", "testmachine");
         let app = Some(AppInfo::new(Some("1.0.0"), Some("test"), Some("rust")));
-        let evt = Event::new(&empty_vec, Severity::Error, None, &device, &app);
+        let evt = Event::new(&empty_vec, Some(&Severity::Error), None, None, &device, &app);
 
         assert_ser_tokens(
             &evt,
@@ -142,6 +148,7 @@ mod tests {
                 Token::SeqEnd,
                 Token::StructSep,
                 Token::Str("severity"),
+                Token::Option(true),
                 Token::EnumUnit("Severity", "error"),
                 Token::StructSep,
                 Token::Str("device"),
