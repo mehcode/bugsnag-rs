@@ -7,7 +7,7 @@ extern crate bugsnag;
 #[macro_use]
 extern crate log;
 
-use log::{LogRecord, LogLevel, LogMetadata, SetLoggerError};
+use log::{LogLevel, LogMetadata, LogRecord, SetLoggerError};
 
 /// Our logger for bugsnag
 struct BugsnagLogger {
@@ -45,11 +45,13 @@ impl log::Log for BugsnagLogger {
         if self.enabled(record.metadata()) {
             let level = convert_log_level(record.metadata().level());
             self.api
-                .notify(record.metadata().level().to_string().as_str(),
-                        record.args().to_string().as_str(),
-                        level,
-                        None,
-                        None)
+                .notify(
+                    record.metadata().level().to_string().as_str(),
+                    record.args().to_string().as_str(),
+                    level,
+                    None,
+                    None,
+                )
                 .unwrap();
         }
     }
@@ -58,10 +60,13 @@ impl log::Log for BugsnagLogger {
 
 
 fn main() {
-    let mut api = bugsnag::Bugsnag::new("api-key", concat!(env!("CARGO_MANIFEST_DIR"), "/examples"));
-    api.set_app_info(Some(env!("CARGO_PKG_VERSION")),
-                     Some("development"),
-                     Some("rust"));
+    let mut api =
+        bugsnag::Bugsnag::new("api-key", concat!(env!("CARGO_MANIFEST_DIR"), "/examples"));
+    api.set_app_info(
+        Some(env!("CARGO_PKG_VERSION")),
+        Some("development"),
+        Some("rust"),
+    );
 
     // initialize the logger
     BugsnagLogger::init(api, LogLevel::Warn).unwrap();

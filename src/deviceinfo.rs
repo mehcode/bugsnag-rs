@@ -37,21 +37,25 @@ impl DeviceInfo {
 #[cfg(test)]
 mod tests {
     use super::DeviceInfo;
-    use serde_test::{Token, assert_ser_tokens};
+    use serde_test::{assert_ser_tokens, Token};
 
     #[test]
     fn test_deviceinfo_to_json() {
         let info = DeviceInfo::new("1.0.0", "testmachine");
 
-        assert_ser_tokens(&info,
-                          &[Token::StructStart("DeviceInfo", 2),
-                            Token::StructSep,
-                            Token::Str("osVersion"),
-                            Token::Str("1.0.0"),
-                            Token::StructSep,
-                            Token::Str("hostname"),
-                            Token::Str("testmachine"),
-                            Token::StructEnd]);
+        assert_ser_tokens(
+            &info,
+            &[
+                Token::StructStart("DeviceInfo", 2),
+                Token::StructSep,
+                Token::Str("osVersion"),
+                Token::Str("1.0.0"),
+                Token::StructSep,
+                Token::Str("hostname"),
+                Token::Str("testmachine"),
+                Token::StructEnd,
+            ],
+        );
     }
 
     #[test]
@@ -60,14 +64,18 @@ mod tests {
         info.set_hostname("testmachine3");
         info.set_os_version("3.0.0");
 
-        assert_ser_tokens(&info,
-                          &[Token::StructStart("DeviceInfo", 2),
-                            Token::StructSep,
-                            Token::Str("osVersion"),
-                            Token::Str("3.0.0"),
-                            Token::StructSep,
-                            Token::Str("hostname"),
-                            Token::Str("testmachine3"),
-                            Token::StructEnd]);
+        assert_ser_tokens(
+            &info,
+            &[
+                Token::StructStart("DeviceInfo", 2),
+                Token::StructSep,
+                Token::Str("osVersion"),
+                Token::Str("3.0.0"),
+                Token::StructSep,
+                Token::Str("hostname"),
+                Token::Str("testmachine3"),
+                Token::StructEnd,
+            ],
+        );
     }
 }

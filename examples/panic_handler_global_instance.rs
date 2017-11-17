@@ -56,24 +56,30 @@ pub fn to_global_instance(api: bugsnag::Bugsnag) {
 fn register_panic_handler_with_global_instance(api: bugsnag::Bugsnag) {
     to_global_instance(api);
 
-    panic::set_hook(Box::new(|info| if let Some(api_mtx) = global_instance() {
-        if let Ok(api) = api_mtx.lock() {
-            if bugsnag::panic::handle(&api,
-                                      &info,
-                                      Some(&["register_panic_handler_with_global_instance"]))
-                .is_err() {
-                println!("Error at notifying bugsnag!");
+    panic::set_hook(Box::new(|info| {
+        if let Some(api_mtx) = global_instance() {
+            if let Ok(api) = api_mtx.lock() {
+                if bugsnag::panic::handle(
+                    &api,
+                    &info,
+                    Some(&["register_panic_handler_with_global_instance"]),
+                ).is_err()
+                {
+                    println!("Error at notifying bugsnag!");
+                }
             }
         }
     }));
 }
 
 fn main() {
-    let mut api = bugsnag::Bugsnag::new("api-key",
-                                        concat!(env!("CARGO_MANIFEST_DIR"), "/examples"));
-    api.set_app_info(Some(env!("CARGO_PKG_VERSION")),
-                     Some("development"),
-                     Some("rust"));
+    let mut api =
+        bugsnag::Bugsnag::new("api-key", concat!(env!("CARGO_MANIFEST_DIR"), "/examples"));
+    api.set_app_info(
+        Some(env!("CARGO_PKG_VERSION")),
+        Some("development"),
+        Some("rust"),
+    );
 
     register_panic_handler_with_global_instance(api);
 

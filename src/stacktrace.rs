@@ -30,9 +30,11 @@ impl Frame {
     /// * `trace` - The backtrace::Symbol with all the information for the frame.
     /// * `in_project_func` - Function to check if a file and a function belongs to the project.
     pub fn from_symbol<F>(trace: &Symbol, in_project: &F) -> Frame
-        where F: Fn(&str, &str) -> bool
+    where
+        F: Fn(&str, &str) -> bool,
     {
-        let file = trace.filename()
+        let file = trace
+            .filename()
             .unwrap_or_else(|| Path::new(""))
             .to_str()
             .unwrap_or("");
@@ -42,7 +44,12 @@ impl Frame {
             None => "unknown".to_string(),
         };
 
-        Frame::new(file, linenumber, method.as_str(), in_project(file, method.as_str()))
+        Frame::new(
+            file,
+            linenumber,
+            method.as_str(),
+            in_project(file, method.as_str()),
+        )
     }
 }
 
@@ -58,13 +65,15 @@ impl Frame {
 /// Bugsnag will use the information about a frame belonging to a project to hide
 /// unnecessary information in the web interface.
 pub fn create_stacktrace<F>(in_project: &F) -> Vec<Frame>
-    where F: Fn(&str, &str) -> bool
+where
+    F: Fn(&str, &str) -> bool,
 {
     let mut result: Vec<Frame> = Vec::new();
 
     backtrace::trace(|frame| {
-        backtrace::resolve(frame.ip(),
-                           |symbol| result.push(Frame::from_symbol(&symbol, in_project)));
+        backtrace::resolve(frame.ip(), |symbol| {
+            result.push(Frame::from_symbol(&symbol, in_project))
+        });
         true
     });
 
@@ -74,12 +83,11 @@ pub fn create_stacktrace<F>(in_project: &F) -> Vec<Frame>
 #[cfg(test)]
 mod tests {
     use super::{create_stacktrace, Frame};
-    use serde_test::{Token, assert_ser_tokens};
+    use serde_test::{assert_ser_tokens, Token};
 
     #[test]
     fn test_create_stacktrace() {
-        let frames =
-            create_stacktrace(&|file, _| file.starts_with(env!("CARGO_MANIFEST_DIR")));
+        let frames = create_stacktrace(&|file, _| file.starts_with(env!("CARGO_MANIFEST_DIR")));
         let mut found_frame = false;
         let file = file!();
 
@@ -101,27 +109,32 @@ mod tests {
     fn test_frame_to_json() {
         let frame = Frame::new("test.rs", 500, "test_json", false);
 
-        assert_ser_tokens(&frame,
-                          &[Token::StructStart("Frame", 4),
-                            Token::StructSep,
-                            Token::Str("file"),
-                            Token::Str("test.rs"),
-                            Token::StructSep,
-                            Token::Str("lineNumber"),
-                            Token::U32(500),
-                            Token::StructSep,
-                            Token::Str("method"),
-                            Token::Str("test_json"),
-                            Token::StructSep,
-                            Token::Str("inProject"),
-                            Token::Bool(false),
-                            Token::StructEnd]);
+        assert_ser_tokens(
+            &frame,
+            &[
+                Token::StructStart("Frame", 4),
+                Token::StructSep,
+                Token::Str("file"),
+                Token::Str("test.rs"),
+                Token::StructSep,
+                Token::Str("lineNumber"),
+                Token::U32(500),
+                Token::StructSep,
+                Token::Str("method"),
+                Token::Str("test_json"),
+                Token::StructSep,
+                Token::Str("inProject"),
+                Token::Bool(false),
+                Token::StructEnd,
+            ],
+        );
     }
 
     #[test]
     fn test_create_stacktrace_with_ignore() {
-        let frames =
-            create_stacktrace(&|_, method| !method.contains("test_create_stacktrace_with_ignore"));
+        let frames = create_stacktrace(&|_, method| {
+            !method.contains("test_create_stacktrace_with_ignore")
+        });
         let mut found_frame = false;
         let file = file!();
 

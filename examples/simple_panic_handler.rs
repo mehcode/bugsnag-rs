@@ -17,15 +17,18 @@ fn register_panic_handler(api: bugsnag::Bugsnag) {
     }));
 }
 
-fn test() -> Option<i32> { 
+fn test() -> Option<i32> {
     None
 }
 
 fn main() {
-    let mut api = bugsnag::Bugsnag::new("api-key", concat!(env!("CARGO_MANIFEST_DIR"), "/examples"));
-    api.set_app_info(Some(env!("CARGO_PKG_VERSION")),
-                     Some("development"),
-                     Some("rust"));
+    let mut api =
+        bugsnag::Bugsnag::new("api-key", concat!(env!("CARGO_MANIFEST_DIR"), "/examples"));
+    api.set_app_info(
+        Some(env!("CARGO_PKG_VERSION")),
+        Some("development"),
+        Some("rust"),
+    );
 
     register_panic_handler(api);
 
