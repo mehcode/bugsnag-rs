@@ -31,6 +31,112 @@ pub struct Bugsnag {
     project_source_dir: String,
 }
 
+/// Builder for creating the notification that will be send to Bugsnag.
+/// If the object is dropped, the notification is send to Bugsnag.
+pub struct NotifyBuilder<'a, 'bugsnag> {
+    bugsnag: &'bugsnag Bugsnag,
+    error_class: &'a str,
+    message: &'a str,
+    send_executed: bool,
+    methods_to_ignore: Option<&'a [&'a str]>,
+    context: Option<&'a str>,
+    severity: Option<Severity>,
+    grouping_hash: Option<&'a str>,
+}
+
+
+impl<'a, 'bugsnag> NotifyBuilder<'a, 'bugsnag> {
+    fn new(
+        bugsnag: &'bugsnag Bugsnag,
+        error_class: &'a str,
+        message: &'a str,
+    ) -> NotifyBuilder<'a, 'bugsnag> {
+        NotifyBuilder {
+            bugsnag,
+            error_class,
+            message,
+            send_executed: false,
+            methods_to_ignore: None,
+            context: None,
+            severity: None,
+            grouping_hash: None,
+        }
+    }
+
+    /// Sets a list of methods that should be marked as not belonging
+    /// to the project when the stacktrace is generated. The Bugsnag web
+    /// interface will use this information to hide unnecessary data.
+    /// To check if a method should be marked as not belonging to the
+    /// project, the method name reported by the stacktrace is checked if it
+    /// contains a method name in this list.
+    pub fn methods_to_ignore(mut self, val: &'a [&'a str]) -> Self {
+        self.methods_to_ignore = Some(val);
+        self
+    }
+
+    /// Sets a context that describes the state of the application while the error occurred.
+    pub fn context(mut self, val: &'a str) -> Self {
+        self.context = Some(val);
+        self
+    }
+
+    /// Sets the severity of the error.
+    pub fn severity(mut self, val: Severity) -> Self {
+        self.severity = Some(val);
+        self
+    }
+
+    /// Sets the grouping hash for the Bugsnag web interface.
+    pub fn grouping_hash(mut self, val: &'a str) -> Self {
+        self.grouping_hash = Some(val);
+        self
+    }
+
+    /// Call this function to explicitly send the notification to Bugsnag.
+    /// This function will be called implicit if this object is dropped, but the notification will
+    /// not be send twice.
+    pub fn send(&mut self) -> Result<(), Error> {
+        if self.send_executed {
+            return Ok(());
+        }
+
+        self.send_executed = true;
+
+        let json = self.prepare_json()?;
+        self.bugsnag.send(&json)
+    }
+
+    /// Prepares the json as string
+    fn prepare_json(&self) -> Result<String, Error> {
+        let stacktrace = self.bugsnag.create_stacktrace(self.methods_to_ignore);
+        let exceptions = vec![
+            exception::Exception::new(self.error_class, self.message, &stacktrace),
+        ];
+        let events = vec![
+            event::Event::new(
+                &exceptions,
+                self.severity.as_ref(),
+                self.context,
+                self.grouping_hash,
+                &self.bugsnag.device_info,
+                &self.bugsnag.app_info,
+            ),
+        ];
+        let notification = notification::Notification::new(&self.bugsnag.api_key, &events);
+
+        match serde_json::to_string(&notification) {
+            Ok(json) => Ok(json),
+            Err(_) => Err(Error::JsonConversionFailed),
+        }
+    }
+}
+
+impl<'a, 'bugsnag> Drop for NotifyBuilder<'a, 'bugsnag> {
+    fn drop(&mut self) {
+        let _ = self.send();
+    }
+}
+
 impl Bugsnag {
     /// Creates a new instance of the Bugsnag api
     pub fn new(api_key: &str, project_source_dir: &str) -> Bugsnag {
@@ -42,42 +148,14 @@ impl Bugsnag {
         }
     }
 
-    /// Converts all data into the Bugsnag json formats and sends this json to
-    /// the Bugsnag web interface.
-    ///
-    /// # Arguments
-    ///
-    /// * `methods_to_ignore` - A list of methods names. These methods are marked as not belonging
-    ///                         to the project when the stacktrace is generated. The Bugsnag web
-    ///                         interface will use this information to hide unnecessary data.
-    ///                         To check if a method should be marked as not belonging to the
-    ///                         project, the method name reported by the stacktrace is checked if it
-    ///                         contains a method name in this list.
-    pub fn notify(
-        &self,
-        error_class: &str,
-        message: &str,
-        severity: Severity,
-        methods_to_ignore: Option<&[&str]>,
-        context: Option<&str>,
-    ) -> Result<(), Error> {
-        let stacktrace = self.create_stacktrace(methods_to_ignore);
-        let exceptions = vec![exception::Exception::new(error_class, message, &stacktrace)];
-        let events = vec![
-            event::Event::new(
-                &exceptions,
-                severity,
-                context,
-                &self.device_info,
-                &self.app_info,
-            ),
-        ];
-        let notification = notification::Notification::new(self.api_key.as_str(), &events);
-
-        match serde_json::to_string(&notification) {
-            Ok(json) => self.send(json.as_str()),
-            Err(_) => Err(Error::JsonTransferFailed),
-        }
+    /// Notifies the Bugsnag web-interface about an error.
+    /// The function returns a builder to provide more information about the error.
+    pub fn notify<'a, 'bugsnag>(
+        &'bugsnag self,
+        error_class: &'a str,
+        message: &'a str,
+    ) -> NotifyBuilder<'a, 'bugsnag> {
+        NotifyBuilder::new(&self, error_class, message)
     }
 
     fn create_stacktrace(&self, methods_to_ignore: Option<&[&str]>) -> Vec<stacktrace::Frame> {
@@ -100,6 +178,7 @@ impl Bugsnag {
         }
     }
 
+    /// Send a json string to the Bugsnag endpoint
     fn send(&self, json: &str) -> Result<(), Error> {
         match Client::new()
             .post(NOTIFY_URL)

@@ -44,15 +44,10 @@ impl log::Log for BugsnagLogger {
     fn log(&self, record: &LogRecord) {
         if self.enabled(record.metadata()) {
             let level = convert_log_level(record.metadata().level());
-            self.api
-                .notify(
-                    record.metadata().level().to_string().as_str(),
-                    record.args().to_string().as_str(),
-                    level,
-                    None,
-                    None,
-                )
-                .unwrap();
+            let level_str = record.metadata().level().to_string();
+            let message = record.args().to_string();
+
+            self.api.notify(&level_str, &message).severity(level);
         }
     }
 }
