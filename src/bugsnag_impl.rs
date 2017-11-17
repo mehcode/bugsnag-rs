@@ -1,4 +1,4 @@
-use super::{event, exception, notification, stacktrace, deviceinfo, appinfo};
+use super::{appinfo, deviceinfo, event, exception, notification, stacktrace};
 
 use serde_json;
 
@@ -53,20 +53,25 @@ impl Bugsnag {
     ///                         To check if a method should be marked as not belonging to the
     ///                         project, the method name reported by the stacktrace is checked if it
     ///                         contains a method name in this list.
-    pub fn notify(&self,
-                  error_class: &str,
-                  message: &str,
-                  severity: Severity,
-                  methods_to_ignore: Option<&[&str]>,
-                  context: Option<&str>)
-                  -> Result<(), Error> {
+    pub fn notify(
+        &self,
+        error_class: &str,
+        message: &str,
+        severity: Severity,
+        methods_to_ignore: Option<&[&str]>,
+        context: Option<&str>,
+    ) -> Result<(), Error> {
         let stacktrace = self.create_stacktrace(methods_to_ignore);
         let exceptions = vec![exception::Exception::new(error_class, message, &stacktrace)];
-        let events = vec![event::Event::new(&exceptions,
-                                            severity,
-                                            context,
-                                            &self.device_info,
-                                            &self.app_info)];
+        let events = vec![
+            event::Event::new(
+                &exceptions,
+                severity,
+                context,
+                &self.device_info,
+                &self.app_info,
+            ),
+        ];
         let notification = notification::Notification::new(self.api_key.as_str(), &events);
 
         match serde_json::to_string(&notification) {
@@ -78,8 +83,11 @@ impl Bugsnag {
     fn create_stacktrace(&self, methods_to_ignore: Option<&[&str]>) -> Vec<stacktrace::Frame> {
         if let Some(ignore) = methods_to_ignore {
             let in_project_check = |file: &str, method: &str| {
-                file.starts_with(self.project_source_dir.as_str()) &&
-                ignore.iter().find(|check| !method.contains(*check)).is_some()
+                file.starts_with(self.project_source_dir.as_str())
+                    && ignore
+                        .iter()
+                        .find(|check| !method.contains(*check))
+                        .is_some()
             };
 
             stacktrace::create_stacktrace(&in_project_check)
@@ -97,7 +105,8 @@ impl Bugsnag {
             .post(NOTIFY_URL)
             .header(ContentType::json())
             .body(json)
-            .send() {
+            .send()
+        {
             Ok(_) => Ok(()),
             Err(_) => Err(Error::JsonTransferFailed),
         }
@@ -117,10 +126,12 @@ impl Bugsnag {
 
     /// Sets information about the application that uses this api. These information
     /// will be send to Bugsnag when notify is called.
-    pub fn set_app_info(&mut self,
-                        version: Option<&str>,
-                        release_stage: Option<&str>,
-                        atype: Option<&str>) {
+    pub fn set_app_info(
+        &mut self,
+        version: Option<&str>,
+        release_stage: Option<&str>,
+        atype: Option<&str>,
+    ) {
         self.app_info = Some(appinfo::AppInfo::new(version, release_stage, atype));
     }
 
@@ -135,8 +146,8 @@ impl Bugsnag {
 
 #[cfg(test)]
 mod tests {
-    use super::{Severity, Bugsnag};
-    use serde_test::{Token, assert_ser_tokens};
+    use super::{Bugsnag, Severity};
+    use serde_test::{assert_ser_tokens, Token};
 
     #[test]
     fn test_error_to_json() {
