@@ -18,8 +18,8 @@ api.set_app_info(Some(env!("CARGO_PKG_VERSION")),
                  Some("development"),
                  Some("rust"));
 
-api.notify("Info", "This is a message from the rust bugsnag api.",
-           bugsnag::Severity::Info, None, None); 
+api.notify("Info", "This is a message from the rust bugsnag api.")
+       .severity(bugsnag::Severity::Info);
 ```
 
 Or in a panic handler you could do the following:
@@ -39,6 +39,5 @@ For more examples on how to integrate bugsnag into a project, the examples folde
 # Which json fields are missing?
 - metaData
 - user
-- groupingHash
 
 The structure of the json can be found [here](https://docs.bugsnag.com/api/error-reporting/).
