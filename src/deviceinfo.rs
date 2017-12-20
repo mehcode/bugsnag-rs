@@ -46,11 +46,12 @@ mod tests {
         assert_ser_tokens(
             &info,
             &[
-                Token::StructStart("DeviceInfo", 2),
-                Token::StructSep,
+                Token::Struct {
+                    name: "DeviceInfo",
+                    len: 2,
+                },
                 Token::Str("osVersion"),
                 Token::Str("1.0.0"),
-                Token::StructSep,
                 Token::Str("hostname"),
                 Token::Str("testmachine"),
                 Token::StructEnd,
@@ -67,11 +68,12 @@ mod tests {
         assert_ser_tokens(
             &info,
             &[
-                Token::StructStart("DeviceInfo", 2),
-                Token::StructSep,
+                Token::Struct {
+                    name: "DeviceInfo",
+                    len: 2,
+                },
                 Token::Str("osVersion"),
                 Token::Str("3.0.0"),
-                Token::StructSep,
                 Token::Str("hostname"),
                 Token::Str("testmachine3"),
                 Token::StructEnd,

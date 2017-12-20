@@ -31,16 +31,16 @@ mod tests {
         assert_ser_tokens(
             &ex,
             &[
-                Token::StructStart("Exception", 3),
-                Token::StructSep,
+                Token::Struct {
+                    name: "Exception",
+                    len: 3,
+                },
                 Token::Str("errorClass"),
                 Token::Str("Assert"),
-                Token::StructSep,
                 Token::Str("message"),
                 Token::Str("Assert"),
-                Token::StructSep,
                 Token::Str("stacktrace"),
-                Token::SeqStart(Some(0)),
+                Token::Seq { len: Some(0) },
                 Token::SeqEnd,
                 Token::StructEnd,
             ],

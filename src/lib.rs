@@ -5,7 +5,6 @@
 //! # Example
 //!
 //! ```
-//! use bugsnag;
 //! let mut api = bugsnag::Bugsnag::new("api-key", env!("CARGO_MANIFEST_DIR"));
 //!
 //! // setting the appinfo is not required, but recommended
@@ -26,6 +25,7 @@ extern crate serde;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;
+#[cfg(test)]
 extern crate serde_test;
 extern crate sys_info;
 
