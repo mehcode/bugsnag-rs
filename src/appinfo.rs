@@ -30,18 +30,18 @@ mod tests {
         assert_ser_tokens(
             &info,
             &[
-                Token::StructStart("AppInfo", 3),
-                Token::StructSep,
+                Token::Struct {
+                    name: "AppInfo",
+                    len: 3,
+                },
                 Token::Str("version"),
-                Token::Option(true),
+                Token::Some,
                 Token::Str("1.0.0"),
-                Token::StructSep,
                 Token::Str("releaseStage"),
-                Token::Option(true),
+                Token::Some,
                 Token::Str("test"),
-                Token::StructSep,
                 Token::Str("type"),
-                Token::Option(true),
+                Token::Some,
                 Token::Str("rust"),
                 Token::StructEnd,
             ],
@@ -55,10 +55,12 @@ mod tests {
         assert_ser_tokens(
             &info,
             &[
-                Token::StructStart("AppInfo", 1),
-                Token::StructSep,
+                Token::Struct {
+                    name: "AppInfo",
+                    len: 1,
+                },
                 Token::Str("version"),
-                Token::Option(true),
+                Token::Some,
                 Token::Str("1.0.0"),
                 Token::StructEnd,
             ],
@@ -72,10 +74,12 @@ mod tests {
         assert_ser_tokens(
             &info,
             &[
-                Token::StructStart("AppInfo", 1),
-                Token::StructSep,
+                Token::Struct {
+                    name: "AppInfo",
+                    len: 1,
+                },
                 Token::Str("releaseStage"),
-                Token::Option(true),
+                Token::Some,
                 Token::Str("test"),
                 Token::StructEnd,
             ],
@@ -89,10 +93,12 @@ mod tests {
         assert_ser_tokens(
             &info,
             &[
-                Token::StructStart("AppInfo", 1),
-                Token::StructSep,
+                Token::Struct {
+                    name: "AppInfo",
+                    len: 1,
+                },
                 Token::Str("type"),
-                Token::Option(true),
+                Token::Some,
                 Token::Str("rust"),
                 Token::StructEnd,
             ],

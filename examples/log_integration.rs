@@ -52,8 +52,6 @@ impl log::Log for BugsnagLogger {
     }
 }
 
-
-
 fn main() {
     let mut api =
         bugsnag::Bugsnag::new("api-key", concat!(env!("CARGO_MANIFEST_DIR"), "/examples"));

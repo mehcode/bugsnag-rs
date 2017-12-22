@@ -1,5 +1,8 @@
 use super::{appinfo, deviceinfo, event, exception, notification, stacktrace};
 
+use std::fmt;
+use std::error::Error as StdError;
+
 use serde_json;
 
 use hyper::Client;
@@ -14,6 +17,23 @@ pub enum Error {
     /// While transferring the json to Bugsnag, a problem occurred.
     /// This error does not reflect if Bugsnag rejected the json.
     JsonTransferFailed,
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", self.description())
+    }
+}
+
+impl StdError for Error {
+    fn description(&self) -> &'static str {
+        match *self {
+            Error::JsonConversionFailed => "conversion to json failed",
+            Error::JsonTransferFailed => {
+                "while transferring the json to Bugsnag, a problem occurred"
+            }
+        }
+    }
 }
 
 #[derive(Debug, Serialize)]
@@ -43,7 +63,6 @@ pub struct NotifyBuilder<'a, 'bugsnag> {
     severity: Option<Severity>,
     grouping_hash: Option<&'a str>,
 }
-
 
 impl<'a, 'bugsnag> NotifyBuilder<'a, 'bugsnag> {
     fn new(
@@ -173,7 +192,6 @@ impl Bugsnag {
             let in_project_check =
                 |file: &str, _: &str| file.starts_with(self.project_source_dir.as_str());
 
-
             stacktrace::create_stacktrace(&in_project_check)
         }
     }
@@ -232,21 +250,45 @@ mod tests {
     fn test_error_to_json() {
         let severity = Severity::Error;
 
-        assert_ser_tokens(&severity, &[Token::EnumUnit("Severity", "error")]);
+        assert_ser_tokens(
+            &severity,
+            &[
+                Token::UnitVariant {
+                    name: "Severity",
+                    variant: "error",
+                },
+            ],
+        );
     }
 
     #[test]
     fn test_info_to_json() {
         let severity = Severity::Info;
 
-        assert_ser_tokens(&severity, &[Token::EnumUnit("Severity", "info")]);
+        assert_ser_tokens(
+            &severity,
+            &[
+                Token::UnitVariant {
+                    name: "Severity",
+                    variant: "info",
+                },
+            ],
+        );
     }
 
     #[test]
     fn test_warning_to_json() {
         let severity = Severity::Warning;
 
-        assert_ser_tokens(&severity, &[Token::EnumUnit("Severity", "warning")]);
+        assert_ser_tokens(
+            &severity,
+            &[
+                Token::UnitVariant {
+                    name: "Severity",
+                    variant: "warning",
+                },
+            ],
+        );
     }
 
     #[test]
