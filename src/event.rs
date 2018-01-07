@@ -14,7 +14,7 @@ pub struct Event<'a> {
     #[serde(skip_serializing_if = "Option::is_none")] context: Option<&'a str>,
     device: &'a DeviceInfo,
     #[serde(skip_serializing_if = "Option::is_none")] app: &'a Option<AppInfo>,
-    #[serde(skip_serializing_if = "Option::is_none")] group_hash: Option<&'a str>,
+    #[serde(skip_serializing_if = "Option::is_none")] grouping_hash: Option<&'a str>,
 }
 
 impl<'a> Event<'a> {
@@ -22,7 +22,7 @@ impl<'a> Event<'a> {
         exceptions: &'a [Exception],
         severity: Option<&'a Severity>,
         context: Option<&'a str>,
-        group_hash: Option<&'a str>,
+        grouping_hash: Option<&'a str>,
         device: &'a DeviceInfo,
         app: &'a Option<AppInfo>,
     ) -> Event<'a> {
@@ -33,7 +33,7 @@ impl<'a> Event<'a> {
             context,
             device,
             app,
-            group_hash,
+            grouping_hash,
         }
     }
 }
